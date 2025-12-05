@@ -6,12 +6,12 @@ import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Link } from "expo-router";
-import { userComModule } from "react-native-usercom";
+import { UserComModule } from "react-native-usercom";
 import { useEffect } from "react";
 
 export default function HomeScreen() {
   useEffect(() => {
-    console.log("USERCOM:", userComModule.initialize);
+    console.log("USERCOM:", UserComModule.initialize);
   }, []);
 
   return (

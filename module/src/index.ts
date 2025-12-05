@@ -1,5 +1,5 @@
 import { NitroModules } from 'react-native-nitro-modules'
-import type { UserComModule } from './specs/UserComModule.nitro'
+import type { UserComModule as UserComModuleType } from './specs/UserComModule.nitro'
 
-export const userComModule =
-  NitroModules.createHybridObject<UserComModule>('UserComModule')
+export const UserComModule =
+  NitroModules.createHybridObject<UserComModuleType>('UserComModule')
