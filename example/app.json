@@ -29,6 +29,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-usercom",
       [
         "expo-splash-screen",
         {

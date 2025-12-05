@@ -69,7 +69,8 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-nitro-modules": "*"
+    "react-native-nitro-modules": "*",
+    "@expo/config-plugins": "*"
   },
   "eslintConfig": {
     "root": true,
