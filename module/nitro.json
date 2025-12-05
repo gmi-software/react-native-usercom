@@ -1,0 +1,18 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["usercom"],
+  "ios": {
+    "iosModuleName": "NitroUsercom"
+  },
+  "android": {
+    "androidNamespace": ["usercom"],
+    "androidCxxLibName": "NitroUsercom"
+  },
+  "autolinking": {
+    "UserComModule": {
+      "swift": "HybridUserComModule",
+      "kotlin": "HybridUserComModule"
+    }
+  },
+  "ignorePaths": ["**/node_modules"]
+}

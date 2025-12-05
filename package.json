@@ -1,0 +1,5 @@
+{
+  "name": "react-native-usercom-monorepo",
+  "private": true,
+  "workspaces": ["example", "module"]
+}
