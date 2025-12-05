@@ -1,5 +1,11 @@
 {
   "name": "react-native-usercom-monorepo",
   "private": true,
-  "workspaces": ["example", "module"]
+  "workspaces": [
+    "example",
+    "module"
+  ],
+  "trustedDependencies": [
+    "react-native-usercom"
+  ]
 }
