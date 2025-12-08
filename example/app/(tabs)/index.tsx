@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { Platform, StyleSheet } from "react-native";
+import { Button, Platform, StyleSheet } from "react-native";
 
 import { HelloWave } from "@/components/hello-wave";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
@@ -7,14 +7,22 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Link } from "expo-router";
 import { UserComModule } from "react-native-usercom";
-import { useEffect } from "react";
 
 export default function HomeScreen() {
-  useEffect(() => {
+  const initUserCom = async () => {
     console.log("JS:UserCom:init", UserComModule.initialize);
-    UserComModule.initialize();
+    try {
+      await UserComModule.initialize({
+        apiKey: "randomApiKey",
+        domain: "https://com.lszpanelewski.example.user.com/",
+        integrationsApiKey: "randomIntApiKey",
+        initTimeoutMs: 2000,
+      });
+    } catch (error) {
+      console.error("JS:UserCom:init:error", error);
+    }
     console.log("JS:UserCom:afterInit");
-  }, []);
+  };
 
   return (
     <ParallaxScrollView
@@ -27,6 +35,7 @@ export default function HomeScreen() {
       }
     >
       <ThemedView style={styles.titleContainer}>
+        <Button title="Init UserCom SDK" onPress={initUserCom} />
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>

@@ -40,7 +40,12 @@
           }
         }
       ],
-      "react-native-usercom",
+      [
+        "react-native-usercom",
+        {
+          "androidNotificationChannelName": "Notifications"
+        }
+      ],
       [
         "expo-splash-screen",
         {

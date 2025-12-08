@@ -54,7 +54,7 @@ namespace margelo::nitro::usercom {
 
   public:
     // Methods
-    void initialize() override;
+    std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) override;
 
   private:
     friend HybridBase;

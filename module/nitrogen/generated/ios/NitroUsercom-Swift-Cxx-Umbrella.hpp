@@ -10,12 +10,18 @@
 // Forward declarations of C++ defined types
 // Forward declaration of `HybridUserComModuleSpec` to properly resolve imports.
 namespace margelo::nitro::usercom { class HybridUserComModuleSpec; }
+// Forward declaration of `UserComModuleConfig` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleConfig; }
 
 // Include C++ defined types
 #include "HybridUserComModuleSpec.hpp"
+#include "UserComModuleConfig.hpp"
+#include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <memory>
+#include <optional>
+#include <string>
 
 // C++ helpers for Swift
 #include "NitroUsercom-Swift-Cxx-Bridge.hpp"

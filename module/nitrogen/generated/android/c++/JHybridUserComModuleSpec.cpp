@@ -7,9 +7,15 @@
 
 #include "JHybridUserComModuleSpec.hpp"
 
+// Forward declaration of `UserComModuleConfig` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleConfig; }
 
-
-
+#include <NitroModules/Promise.hpp>
+#include <NitroModules/JPromise.hpp>
+#include "UserComModuleConfig.hpp"
+#include "JUserComModuleConfig.hpp"
+#include <string>
+#include <optional>
 
 namespace margelo::nitro::usercom {
 
@@ -43,9 +49,20 @@ namespace margelo::nitro::usercom {
   
 
   // Methods
-  void JHybridUserComModuleSpec::initialize() {
-    static const auto method = javaClassStatic()->getMethod<void()>("initialize");
-    method(_javaPart);
+  std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::initialize(const UserComModuleConfig& config) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<JUserComModuleConfig> /* config */)>("initialize");
+    auto __result = method(_javaPart, JUserComModuleConfig::fromCpp(config));
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
   }
 
 } // namespace margelo::nitro::usercom

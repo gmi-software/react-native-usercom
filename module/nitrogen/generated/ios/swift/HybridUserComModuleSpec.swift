@@ -14,7 +14,7 @@ public protocol HybridUserComModuleSpec_protocol: HybridObject {
   
 
   // Methods
-  func initialize() throws -> Void
+  func initialize(config: UserComModuleConfig) throws -> Promise<Void>
 }
 
 public extension HybridUserComModuleSpec_protocol {

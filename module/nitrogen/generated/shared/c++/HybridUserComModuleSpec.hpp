@@ -13,9 +13,11 @@
 #error NitroModules cannot be found! Are you sure you installed NitroModules properly?
 #endif
 
+// Forward declaration of `UserComModuleConfig` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleConfig; }
 
-
-
+#include <NitroModules/Promise.hpp>
+#include "UserComModuleConfig.hpp"
 
 namespace margelo::nitro::usercom {
 
@@ -48,7 +50,7 @@ namespace margelo::nitro::usercom {
 
     public:
       // Methods
-      virtual void initialize() = 0;
+      virtual std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) = 0;
 
     protected:
       // Hybrid Setup
