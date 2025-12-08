@@ -5,23 +5,62 @@ React Native module for [User.com](https://user.com) SDK integration using [Nitr
 ## Installation
 
 ```bash
-npm install react-native-usercom
+npm install react-native-usercom @react-native-firebase/app
 # or
-yarn add react-native-usercom
+yarn add react-native-usercom @react-native-firebase/app
 # or
-bun add react-native-usercom
+bun add react-native-usercom @react-native-firebase/app
+```
+
+## Firebase Configuration
+
+User.com SDK requires Firebase for push notifications. You need to configure Firebase in your project:
+
+### 1. Create a Firebase project
+
+Go to [Firebase Console](https://console.firebase.google.com/) and create a new project (or use existing one).
+
+### 2. Add Firebase configuration files
+
+Download the configuration files from Firebase Console:
+
+- **iOS**: `GoogleService-Info.plist` - place it in your project root
+- **Android**: `google-services.json` - place it in your project root
+
+### 3. Configure app.json (Expo)
+
+Add the Firebase configuration files to your `app.json`:
+
+```json
+{
+  "expo": {
+    "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json"
+    }
+  }
+}
 ```
 
 ## Configuration
 
 ### Expo
 
-Add the plugin to your `app.json`:
+Add the plugins to your `app.json`:
 
 ```json
 {
   "expo": {
+    "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json"
+    },
     "plugins": [
+      "@react-native-firebase/app",
       [
         "expo-build-properties",
         {
@@ -37,6 +76,8 @@ Add the plugin to your `app.json`:
 ```
 
 > **⚠️ Important (iOS):** The `expo-build-properties` plugin with `"useFrameworks": "static"` is **required** for iOS. The User.com SDK (UserSDK) depends on Firebase, which requires static frameworks to work correctly with CocoaPods.
+
+> **⚠️ Important:** The `@react-native-firebase/app` plugin must be added **before** `expo-build-properties` in the plugins array.
 
 Then run:
 

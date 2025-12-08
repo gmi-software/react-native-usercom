@@ -12,7 +12,7 @@ import { useEffect } from "react";
 export default function HomeScreen() {
   useEffect(() => {
     console.log("JS:UserCom:init", UserComModule.initialize);
-    // UserComModule.initialize();
+    UserComModule.initialize();
     console.log("JS:UserCom:afterInit");
   }, []);
 
