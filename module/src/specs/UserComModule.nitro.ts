@@ -32,6 +32,6 @@ export interface UserComModule extends HybridObject<{
   registerUser(
     userData: UserComModuleUserData
   ): Promise<UserComModuleRegisterUserResponse>
-  // logout: Promise<void>
+  logout(): Promise<void>
   // sendEvent(eventName: string, data: string): Promise<void>
 }

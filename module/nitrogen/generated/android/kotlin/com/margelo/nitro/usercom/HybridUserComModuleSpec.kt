@@ -54,6 +54,10 @@ abstract class HybridUserComModuleSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun logout(): Promise<Unit>
 
   private external fun initHybrid(): HybridData
 

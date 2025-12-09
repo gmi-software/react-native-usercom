@@ -43,4 +43,23 @@ class HybridUserComModule: HybridUserComModuleSpec {
         
         return promise
     }
+    
+    func logout() throws -> NitroModules.Promise<Void> {
+        let promise = Promise<Void>()
+        
+        guard let sdk: UserSDK = UserSDK.default else {
+            promise.reject(withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0))
+            return promise
+        }
+        
+        sdk.logout { success, error in
+            if let error = error {
+                promise.reject(withError: error)
+            } else {
+                promise.resolve()
+            }
+        }
+        
+        return promise
+    }
 }

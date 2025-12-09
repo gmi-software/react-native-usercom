@@ -58,6 +58,7 @@ namespace margelo::nitro::usercom {
       // Methods
       virtual std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) = 0;
       virtual std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> registerUser(const UserComModuleUserData& userData) = 0;
+      virtual std::shared_ptr<Promise<void>> logout() = 0;
 
     protected:
       // Hybrid Setup

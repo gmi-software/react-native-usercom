@@ -8,6 +8,7 @@ import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.NitroModules
 import com.margelo.nitro.core.Promise
 import com.margelo.nitro.core.resolve
+import com.margelo.nitro.core.resolved
 import com.user.sdk.UserCom
 import com.user.sdk.customer.Customer
 import com.user.sdk.customer.CustomerUpdateCallback
@@ -92,6 +93,13 @@ class HybridUserComModule : HybridUserComModuleSpec() {
     override fun registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse> {
         val promise = Promise<UserComModuleRegisterUserResponse>()
 
+        val instance = try {
+            UserCom.getInstance()
+        } catch (_: Throwable) {
+            promise.reject(Throwable("SDK is not initialized, call initialize() first"))
+            return promise
+        }
+
         UserCom.getInstance()
             .register(buildCustomer(userData), object : CustomerUpdateCallback {
                 override fun onSuccess(p0: RegisterResponse) {
@@ -103,5 +111,15 @@ class HybridUserComModule : HybridUserComModuleSpec() {
                 }
             })
         return promise
+    }
+
+    override fun logout(): Promise<Unit> {
+        val instance = try {
+            UserCom.getInstance()
+        } catch (_: Throwable) {
+            return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
+        }
+        instance.logout()
+        return Promise.resolved()
     }
 }
