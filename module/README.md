@@ -201,7 +201,7 @@ See the [example app](<../example/app/(tabs)/index.tsx>) for a usage pattern.
 
 ## API
 
-### `UserComModule.initialize()`
+### `UserComModule.initialize(config: UserComModuleConfig): Promise<void>`
 
 Initializes the User.com SDK. Call this method early in your app lifecycle. Returns a Promise that resolves when the SDK is ready, or rejects on error.
 
@@ -212,8 +212,50 @@ await UserComModule.initialize({
   apiKey: 'YOUR_API_KEY',
   integrationsApiKey: 'YOUR_INTEGRATIONS_API_KEY',
   domain: 'https://yourdomain.user.com/',
+  // Optional:
+  trackAllActivities: true,
+  openLinksInChromeCustomTabs: false,
+  initTimeoutMs: 2000,
+  defaultCustomer: {
+    id: 'user_id',
+    email: 'user@email.com',
+    firstName: 'John',
+    lastName: 'Doe',
+    attributes: { plan: 'pro' },
+  },
 })
 ```
+
+### `UserComModule.registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse>`
+
+Registers or updates a user in the User.com SDK. Returns the user key (string) or null (iOS).
+
+```typescript
+const userKey = await UserComModule.registerUser({
+  id: 'user_id',
+  email: 'user@email.com',
+  firstName: 'John',
+  lastName: 'Doe',
+  attributes: { plan: 'pro' },
+})
+```
+
+### `UserComModule.logout(): Promise<void>`
+
+Logs out the current user from the User.com SDK.
+
+```typescript
+await UserComModule.logout()
+```
+
+<!-- Uncomment when implemented
+### `UserComModule.sendEvent(eventName: string, data: string): Promise<void>`
+Sends a custom event to User.com.
+
+```typescript
+await UserComModule.sendEvent('purchase', JSON.stringify({ amount: 100 }))
+```
+-->
 
 ## Requirements
 
