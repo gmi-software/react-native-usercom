@@ -15,9 +15,15 @@
 
 // Forward declaration of `UserComModuleConfig` to properly resolve imports.
 namespace margelo::nitro::usercom { struct UserComModuleConfig; }
+// Forward declaration of `UserComModuleUserData` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 
 #include <NitroModules/Promise.hpp>
 #include "UserComModuleConfig.hpp"
+#include <NitroModules/Null.hpp>
+#include <string>
+#include <variant>
+#include "UserComModuleUserData.hpp"
 
 namespace margelo::nitro::usercom {
 
@@ -51,6 +57,7 @@ namespace margelo::nitro::usercom {
     public:
       // Methods
       virtual std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) = 0;
+      virtual std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> registerUser(const UserComModuleUserData& userData) = 0;
 
     protected:
       // Hybrid Setup

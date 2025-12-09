@@ -10,8 +10,13 @@
 #include <fbjni/fbjni.h>
 #include "UserComModuleConfig.hpp"
 
+#include "JUserComModuleAttributeValue.hpp"
+#include "JUserComModuleUserData.hpp"
+#include "UserComModuleUserData.hpp"
 #include <optional>
 #include <string>
+#include <unordered_map>
+#include <variant>
 
 namespace margelo::nitro::usercom {
 
@@ -44,13 +49,16 @@ namespace margelo::nitro::usercom {
       jni::local_ref<jni::JBoolean> openLinksInChromeCustomTabs = this->getFieldValue(fieldOpenLinksInChromeCustomTabs);
       static const auto fieldInitTimeoutMs = clazz->getField<jni::JDouble>("initTimeoutMs");
       jni::local_ref<jni::JDouble> initTimeoutMs = this->getFieldValue(fieldInitTimeoutMs);
+      static const auto fieldDefaultCustomer = clazz->getField<JUserComModuleUserData>("defaultCustomer");
+      jni::local_ref<JUserComModuleUserData> defaultCustomer = this->getFieldValue(fieldDefaultCustomer);
       return UserComModuleConfig(
         apiKey->toStdString(),
         integrationsApiKey->toStdString(),
         domain->toStdString(),
         trackAllActivities != nullptr ? std::make_optional(static_cast<bool>(trackAllActivities->value())) : std::nullopt,
         openLinksInChromeCustomTabs != nullptr ? std::make_optional(static_cast<bool>(openLinksInChromeCustomTabs->value())) : std::nullopt,
-        initTimeoutMs != nullptr ? std::make_optional(initTimeoutMs->value()) : std::nullopt
+        initTimeoutMs != nullptr ? std::make_optional(initTimeoutMs->value()) : std::nullopt,
+        defaultCustomer != nullptr ? std::make_optional(defaultCustomer->toCpp()) : std::nullopt
       );
     }
 
@@ -60,7 +68,7 @@ namespace margelo::nitro::usercom {
      */
     [[maybe_unused]]
     static jni::local_ref<JUserComModuleConfig::javaobject> fromCpp(const UserComModuleConfig& value) {
-      using JSignature = JUserComModuleConfig(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>);
+      using JSignature = JUserComModuleConfig(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<JUserComModuleUserData>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -70,7 +78,8 @@ namespace margelo::nitro::usercom {
         jni::make_jstring(value.domain),
         value.trackAllActivities.has_value() ? jni::JBoolean::valueOf(value.trackAllActivities.value()) : nullptr,
         value.openLinksInChromeCustomTabs.has_value() ? jni::JBoolean::valueOf(value.openLinksInChromeCustomTabs.value()) : nullptr,
-        value.initTimeoutMs.has_value() ? jni::JDouble::valueOf(value.initTimeoutMs.value()) : nullptr
+        value.initTimeoutMs.has_value() ? jni::JDouble::valueOf(value.initTimeoutMs.value()) : nullptr,
+        value.defaultCustomer.has_value() ? JUserComModuleUserData::fromCpp(value.defaultCustomer.value()) : nullptr
       );
     }
   };

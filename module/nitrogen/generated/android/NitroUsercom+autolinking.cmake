@@ -36,6 +36,8 @@ target_sources(
   ../nitrogen/generated/shared/c++/HybridUserComModuleSpec.cpp
   # Android-specific Nitrogen C++ sources
   ../nitrogen/generated/android/c++/JHybridUserComModuleSpec.cpp
+  ../nitrogen/generated/android/c++/JUserComModuleRegisterUserResponse.cpp
+  ../nitrogen/generated/android/c++/JUserComModuleAttributeValue.cpp
 )
 
 # From node_modules/react-native/ReactAndroid/cmake-utils/folly-flags.cmake

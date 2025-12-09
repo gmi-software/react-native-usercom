@@ -10,6 +10,8 @@
 // Forward declarations of C++ defined types
 // Forward declaration of `HybridUserComModuleSpec` to properly resolve imports.
 namespace margelo::nitro::usercom { class HybridUserComModuleSpec; }
+// Forward declaration of `UserComModuleUserData` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 
 // Forward declarations of Swift defined types
 // Forward declaration of `HybridUserComModuleSpec_cxx` to properly resolve imports.
@@ -17,6 +19,8 @@ namespace NitroUsercom { class HybridUserComModuleSpec_cxx; }
 
 // Include C++ defined types
 #include "HybridUserComModuleSpec.hpp"
+#include "UserComModuleUserData.hpp"
+#include <NitroModules/Null.hpp>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
@@ -24,6 +28,9 @@ namespace NitroUsercom { class HybridUserComModuleSpec_cxx; }
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
+#include <variant>
 
 /**
  * Contains specialized versions of C++ templated types so they can be accessed from Swift,
@@ -117,6 +124,174 @@ namespace margelo::nitro::usercom::bridge::swift {
     return *optional;
   }
   
+  // pragma MARK: std::optional<std::string>
+  /**
+   * Specialized version of `std::optional<std::string>`.
+   */
+  using std__optional_std__string_ = std::optional<std::string>;
+  inline std::optional<std::string> create_std__optional_std__string_(const std::string& value) noexcept {
+    return std::optional<std::string>(value);
+  }
+  inline bool has_value_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::string get_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
+    return *optional;
+  }
+  
+  // pragma MARK: std::variant<bool, std::string, double>
+  /**
+   * Wrapper struct for `std::variant<bool, std::string, double>`.
+   * std::variant cannot be used in Swift because of a Swift bug.
+   * Not even specializing it works. So we create a wrapper struct.
+   */
+  struct std__variant_bool__std__string__double_ {
+    std::variant<bool, std::string, double> variant;
+    std__variant_bool__std__string__double_(std::variant<bool, std::string, double> variant): variant(variant) { }
+    operator std::variant<bool, std::string, double>() const noexcept {
+      return variant;
+    }
+    inline size_t index() const noexcept {
+      return variant.index();
+    }
+    inline bool get_0() const noexcept {
+      return std::get<0>(variant);
+    }
+    inline std::string get_1() const noexcept {
+      return std::get<1>(variant);
+    }
+    inline double get_2() const noexcept {
+      return std::get<2>(variant);
+    }
+  };
+  inline std__variant_bool__std__string__double_ create_std__variant_bool__std__string__double_(bool value) noexcept {
+    return std__variant_bool__std__string__double_(value);
+  }
+  inline std__variant_bool__std__string__double_ create_std__variant_bool__std__string__double_(const std::string& value) noexcept {
+    return std__variant_bool__std__string__double_(value);
+  }
+  inline std__variant_bool__std__string__double_ create_std__variant_bool__std__string__double_(double value) noexcept {
+    return std__variant_bool__std__string__double_(value);
+  }
+  
+  // pragma MARK: std::unordered_map<std::string, std::variant<bool, std::string, double>>
+  /**
+   * Specialized version of `std::unordered_map<std::string, std::variant<bool, std::string, double>>`.
+   */
+  using std__unordered_map_std__string__std__variant_bool__std__string__double__ = std::unordered_map<std::string, std::variant<bool, std::string, double>>;
+  inline std::unordered_map<std::string, std::variant<bool, std::string, double>> create_std__unordered_map_std__string__std__variant_bool__std__string__double__(size_t size) noexcept {
+    std::unordered_map<std::string, std::variant<bool, std::string, double>> map;
+    map.reserve(size);
+    return map;
+  }
+  inline std::vector<std::string> get_std__unordered_map_std__string__std__variant_bool__std__string__double___keys(const std__unordered_map_std__string__std__variant_bool__std__string__double__& map) noexcept {
+    std::vector<std::string> keys;
+    keys.reserve(map.size());
+    for (const auto& entry : map) {
+      keys.push_back(entry.first);
+    }
+    return keys;
+  }
+  inline std::variant<bool, std::string, double> get_std__unordered_map_std__string__std__variant_bool__std__string__double___value(const std__unordered_map_std__string__std__variant_bool__std__string__double__& map, const std::string& key) noexcept {
+    return map.find(key)->second;
+  }
+  inline void emplace_std__unordered_map_std__string__std__variant_bool__std__string__double__(std__unordered_map_std__string__std__variant_bool__std__string__double__& map, const std::string& key, const std::variant<bool, std::string, double>& value) noexcept {
+    map.emplace(key, value);
+  }
+  
+  // pragma MARK: std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>
+  /**
+   * Specialized version of `std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>`.
+   */
+  using std__optional_std__unordered_map_std__string__std__variant_bool__std__string__double___ = std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>;
+  inline std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>> create_std__optional_std__unordered_map_std__string__std__variant_bool__std__string__double___(const std::unordered_map<std::string, std::variant<bool, std::string, double>>& value) noexcept {
+    return std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>(value);
+  }
+  inline bool has_value_std__optional_std__unordered_map_std__string__std__variant_bool__std__string__double___(const std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::unordered_map<std::string, std::variant<bool, std::string, double>> get_std__optional_std__unordered_map_std__string__std__variant_bool__std__string__double___(const std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>& optional) noexcept {
+    return *optional;
+  }
+  
+  // pragma MARK: std::optional<UserComModuleUserData>
+  /**
+   * Specialized version of `std::optional<UserComModuleUserData>`.
+   */
+  using std__optional_UserComModuleUserData_ = std::optional<UserComModuleUserData>;
+  inline std::optional<UserComModuleUserData> create_std__optional_UserComModuleUserData_(const UserComModuleUserData& value) noexcept {
+    return std::optional<UserComModuleUserData>(value);
+  }
+  inline bool has_value_std__optional_UserComModuleUserData_(const std::optional<UserComModuleUserData>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline UserComModuleUserData get_std__optional_UserComModuleUserData_(const std::optional<UserComModuleUserData>& optional) noexcept {
+    return *optional;
+  }
+  
+  // pragma MARK: std::variant<nitro::NullType, std::string>
+  /**
+   * Wrapper struct for `std::variant<nitro::NullType, std::string>`.
+   * std::variant cannot be used in Swift because of a Swift bug.
+   * Not even specializing it works. So we create a wrapper struct.
+   */
+  struct std__variant_nitro__NullType__std__string_ {
+    std::variant<nitro::NullType, std::string> variant;
+    std__variant_nitro__NullType__std__string_(std::variant<nitro::NullType, std::string> variant): variant(variant) { }
+    operator std::variant<nitro::NullType, std::string>() const noexcept {
+      return variant;
+    }
+    inline size_t index() const noexcept {
+      return variant.index();
+    }
+    inline nitro::NullType get_0() const noexcept {
+      return std::get<0>(variant);
+    }
+    inline std::string get_1() const noexcept {
+      return std::get<1>(variant);
+    }
+  };
+  inline std__variant_nitro__NullType__std__string_ create_std__variant_nitro__NullType__std__string_(nitro::NullType value) noexcept {
+    return std__variant_nitro__NullType__std__string_(value);
+  }
+  inline std__variant_nitro__NullType__std__string_ create_std__variant_nitro__NullType__std__string_(const std::string& value) noexcept {
+    return std__variant_nitro__NullType__std__string_(value);
+  }
+  
+  // pragma MARK: std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>`.
+   */
+  using std__shared_ptr_Promise_std__variant_nitro__NullType__std__string___ = std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>;
+  inline std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> create_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string___() noexcept {
+    return Promise<std::variant<nitro::NullType, std::string>>::create();
+  }
+  inline PromiseHolder<std::variant<nitro::NullType, std::string>> wrap_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string___(std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> promise) noexcept {
+    return PromiseHolder<std::variant<nitro::NullType, std::string>>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void(const std::variant<nitro::NullType, std::string>& /* result */)>
+  /**
+   * Specialized version of `std::function<void(const std::variant<nitro::NullType, std::string>&)>`.
+   */
+  using Func_void_std__variant_nitro__NullType__std__string_ = std::function<void(const std::variant<nitro::NullType, std::string>& /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(const std::variant<nitro::NullType, std::string>& / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_std__variant_nitro__NullType__std__string__Wrapper final {
+  public:
+    explicit Func_void_std__variant_nitro__NullType__std__string__Wrapper(std::function<void(const std::variant<nitro::NullType, std::string>& /* result */)>&& func): _function(std::make_unique<std::function<void(const std::variant<nitro::NullType, std::string>& /* result */)>>(std::move(func))) {}
+    inline void call(std::variant<nitro::NullType, std::string> result) const noexcept {
+      _function->operator()(result);
+    }
+  private:
+    std::unique_ptr<std::function<void(const std::variant<nitro::NullType, std::string>& /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_std__variant_nitro__NullType__std__string_ create_Func_void_std__variant_nitro__NullType__std__string_(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_std__variant_nitro__NullType__std__string__Wrapper wrap_Func_void_std__variant_nitro__NullType__std__string_(Func_void_std__variant_nitro__NullType__std__string_ value) noexcept {
+    return Func_void_std__variant_nitro__NullType__std__string__Wrapper(std::move(value));
+  }
+  
   // pragma MARK: std::shared_ptr<HybridUserComModuleSpec>
   /**
    * Specialized version of `std::shared_ptr<HybridUserComModuleSpec>`.
@@ -136,6 +311,15 @@ namespace margelo::nitro::usercom::bridge::swift {
   }
   inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<void>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>>
+  using Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____ = Result<std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>>;
+  inline Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____ create_Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____(const std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____ create_Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>>::withError(error);
   }
 
 } // namespace margelo::nitro::usercom::bridge::swift

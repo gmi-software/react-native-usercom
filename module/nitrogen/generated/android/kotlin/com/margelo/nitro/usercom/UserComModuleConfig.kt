@@ -34,7 +34,10 @@ data class UserComModuleConfig(
   val openLinksInChromeCustomTabs: Boolean?,
   @DoNotStrip
   @Keep
-  val initTimeoutMs: Double?
+  val initTimeoutMs: Double?,
+  @DoNotStrip
+  @Keep
+  val defaultCustomer: UserComModuleUserData?
 ) {
   /* primary constructor */
 
@@ -46,8 +49,8 @@ data class UserComModuleConfig(
     @Keep
     @Suppress("unused")
     @JvmStatic
-    private fun fromCpp(apiKey: String, integrationsApiKey: String, domain: String, trackAllActivities: Boolean?, openLinksInChromeCustomTabs: Boolean?, initTimeoutMs: Double?): UserComModuleConfig {
-      return UserComModuleConfig(apiKey, integrationsApiKey, domain, trackAllActivities, openLinksInChromeCustomTabs, initTimeoutMs)
+    private fun fromCpp(apiKey: String, integrationsApiKey: String, domain: String, trackAllActivities: Boolean?, openLinksInChromeCustomTabs: Boolean?, initTimeoutMs: Double?, defaultCustomer: UserComModuleUserData?): UserComModuleConfig {
+      return UserComModuleConfig(apiKey, integrationsApiKey, domain, trackAllActivities, openLinksInChromeCustomTabs, initTimeoutMs, defaultCustomer)
     }
   }
 }

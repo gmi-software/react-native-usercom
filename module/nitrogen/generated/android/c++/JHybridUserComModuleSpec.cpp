@@ -9,13 +9,23 @@
 
 // Forward declaration of `UserComModuleConfig` to properly resolve imports.
 namespace margelo::nitro::usercom { struct UserComModuleConfig; }
+// Forward declaration of `UserComModuleUserData` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/JPromise.hpp>
+#include <NitroModules/Null.hpp>
+#include <string>
+#include <variant>
+#include "JUserComModuleRegisterUserResponse.hpp"
+#include <NitroModules/JNull.hpp>
 #include "UserComModuleConfig.hpp"
 #include "JUserComModuleConfig.hpp"
-#include <string>
 #include <optional>
+#include "UserComModuleUserData.hpp"
+#include "JUserComModuleUserData.hpp"
+#include <unordered_map>
+#include "JUserComModuleAttributeValue.hpp"
 
 namespace margelo::nitro::usercom {
 
@@ -56,6 +66,22 @@ namespace margelo::nitro::usercom {
       auto __promise = Promise<void>::create();
       __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
         __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> JHybridUserComModuleSpec::registerUser(const UserComModuleUserData& userData) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<JUserComModuleUserData> /* userData */)>("registerUser");
+    auto __result = method(_javaPart, JUserComModuleUserData::fromCpp(userData));
+    return [&]() {
+      auto __promise = Promise<std::variant<nitro::NullType, std::string>>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<JUserComModuleRegisterUserResponse>(__boxedResult);
+        __promise->resolve(__result->toCpp());
       });
       __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
         jni::JniException __jniError(__throwable);

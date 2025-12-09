@@ -14,11 +14,17 @@ namespace NitroUsercom { class HybridUserComModuleSpec_cxx; }
 
 // Forward declaration of `UserComModuleConfig` to properly resolve imports.
 namespace margelo::nitro::usercom { struct UserComModuleConfig; }
+// Forward declaration of `UserComModuleUserData` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 
 #include <NitroModules/Promise.hpp>
 #include "UserComModuleConfig.hpp"
 #include <string>
 #include <optional>
+#include "UserComModuleUserData.hpp"
+#include <variant>
+#include <unordered_map>
+#include <NitroModules/Null.hpp>
 
 #include "NitroUsercom-Swift-Cxx-Umbrella.hpp"
 
@@ -66,6 +72,14 @@ namespace margelo::nitro::usercom {
     // Methods
     inline std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) override {
       auto __result = _swiftPart.initialize(std::forward<decltype(config)>(config));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> registerUser(const UserComModuleUserData& userData) override {
+      auto __result = _swiftPart.registerUser(std::forward<decltype(userData)>(userData));
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

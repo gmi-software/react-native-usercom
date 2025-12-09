@@ -15,6 +15,7 @@ namespace margelo::nitro::usercom {
     // load custom methods/properties
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridMethod("initialize", &HybridUserComModuleSpec::initialize);
+      prototype.registerHybridMethod("registerUser", &HybridUserComModuleSpec::registerUser);
     });
   }
 

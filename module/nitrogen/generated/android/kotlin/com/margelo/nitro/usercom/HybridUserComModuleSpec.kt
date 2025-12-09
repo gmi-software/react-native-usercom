@@ -11,6 +11,7 @@ import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.Promise
+import com.margelo.nitro.core.NullType
 import com.margelo.nitro.core.HybridObject
 
 /**
@@ -49,6 +50,10 @@ abstract class HybridUserComModuleSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun initialize(config: UserComModuleConfig): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse>
 
   private external fun initHybrid(): HybridData
 

@@ -135,4 +135,30 @@ open class HybridUserComModuleSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func registerUser(userData: UserComModuleUserData) -> bridge.Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____ {
+    do {
+      let __result = try self.__implementation.registerUser(userData: userData)
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__variant_nitro__NullType__std__string___ in
+        let __promise = bridge.create_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string___()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string___(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve({ () -> bridge.std__variant_nitro__NullType__std__string_ in
+              switch __result {
+                case .first(let __value):
+                  return bridge.create_std__variant_nitro__NullType__std__string_(margelo.nitro.NullType.null)
+                case .second(let __value):
+                  return bridge.create_std__variant_nitro__NullType__std__string_(std.string(__value))
+              }
+            }().variant) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____(__exceptionPtr)
+    }
+  }
 }

@@ -19,7 +19,7 @@ public extension UserComModuleConfig {
   /**
    * Create a new instance of `UserComModuleConfig`.
    */
-  init(apiKey: String, integrationsApiKey: String, domain: String, trackAllActivities: Bool?, openLinksInChromeCustomTabs: Bool?, initTimeoutMs: Double?) {
+  init(apiKey: String, integrationsApiKey: String, domain: String, trackAllActivities: Bool?, openLinksInChromeCustomTabs: Bool?, initTimeoutMs: Double?, defaultCustomer: UserComModuleUserData?) {
     self.init(std.string(apiKey), std.string(integrationsApiKey), std.string(domain), { () -> bridge.std__optional_bool_ in
       if let __unwrappedValue = trackAllActivities {
         return bridge.create_std__optional_bool_(__unwrappedValue)
@@ -35,6 +35,12 @@ public extension UserComModuleConfig {
     }(), { () -> bridge.std__optional_double_ in
       if let __unwrappedValue = initTimeoutMs {
         return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_UserComModuleUserData_ in
+      if let __unwrappedValue = defaultCustomer {
+        return bridge.create_std__optional_UserComModuleUserData_(__unwrappedValue)
       } else {
         return .init()
       }
@@ -132,6 +138,23 @@ public extension UserComModuleConfig {
       self.__initTimeoutMs = { () -> bridge.std__optional_double_ in
         if let __unwrappedValue = newValue {
           return bridge.create_std__optional_double_(__unwrappedValue)
+        } else {
+          return .init()
+        }
+      }()
+    }
+  }
+  
+  var defaultCustomer: UserComModuleUserData? {
+    @inline(__always)
+    get {
+      return self.__defaultCustomer.value
+    }
+    @inline(__always)
+    set {
+      self.__defaultCustomer = { () -> bridge.std__optional_UserComModuleUserData_ in
+        if let __unwrappedValue = newValue {
+          return bridge.create_std__optional_UserComModuleUserData_(__unwrappedValue)
         } else {
           return .init()
         }

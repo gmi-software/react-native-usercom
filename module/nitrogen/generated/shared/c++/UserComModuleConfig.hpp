@@ -23,10 +23,12 @@
 #error NitroModules cannot be found! Are you sure you installed NitroModules properly?
 #endif
 
-
+// Forward declaration of `UserComModuleUserData` to properly resolve imports.
+namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 
 #include <string>
 #include <optional>
+#include "UserComModuleUserData.hpp"
 
 namespace margelo::nitro::usercom {
 
@@ -41,10 +43,11 @@ namespace margelo::nitro::usercom {
     std::optional<bool> trackAllActivities     SWIFT_PRIVATE;
     std::optional<bool> openLinksInChromeCustomTabs     SWIFT_PRIVATE;
     std::optional<double> initTimeoutMs     SWIFT_PRIVATE;
+    std::optional<UserComModuleUserData> defaultCustomer     SWIFT_PRIVATE;
 
   public:
     UserComModuleConfig() = default;
-    explicit UserComModuleConfig(std::string apiKey, std::string integrationsApiKey, std::string domain, std::optional<bool> trackAllActivities, std::optional<bool> openLinksInChromeCustomTabs, std::optional<double> initTimeoutMs): apiKey(apiKey), integrationsApiKey(integrationsApiKey), domain(domain), trackAllActivities(trackAllActivities), openLinksInChromeCustomTabs(openLinksInChromeCustomTabs), initTimeoutMs(initTimeoutMs) {}
+    explicit UserComModuleConfig(std::string apiKey, std::string integrationsApiKey, std::string domain, std::optional<bool> trackAllActivities, std::optional<bool> openLinksInChromeCustomTabs, std::optional<double> initTimeoutMs, std::optional<UserComModuleUserData> defaultCustomer): apiKey(apiKey), integrationsApiKey(integrationsApiKey), domain(domain), trackAllActivities(trackAllActivities), openLinksInChromeCustomTabs(openLinksInChromeCustomTabs), initTimeoutMs(initTimeoutMs), defaultCustomer(defaultCustomer) {}
   };
 
 } // namespace margelo::nitro::usercom
@@ -62,7 +65,8 @@ namespace margelo::nitro {
         JSIConverter<std::string>::fromJSI(runtime, obj.getProperty(runtime, "domain")),
         JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, "trackAllActivities")),
         JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, "openLinksInChromeCustomTabs")),
-        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, "initTimeoutMs"))
+        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, "initTimeoutMs")),
+        JSIConverter<std::optional<margelo::nitro::usercom::UserComModuleUserData>>::fromJSI(runtime, obj.getProperty(runtime, "defaultCustomer"))
       );
     }
     static inline jsi::Value toJSI(jsi::Runtime& runtime, const margelo::nitro::usercom::UserComModuleConfig& arg) {
@@ -73,6 +77,7 @@ namespace margelo::nitro {
       obj.setProperty(runtime, "trackAllActivities", JSIConverter<std::optional<bool>>::toJSI(runtime, arg.trackAllActivities));
       obj.setProperty(runtime, "openLinksInChromeCustomTabs", JSIConverter<std::optional<bool>>::toJSI(runtime, arg.openLinksInChromeCustomTabs));
       obj.setProperty(runtime, "initTimeoutMs", JSIConverter<std::optional<double>>::toJSI(runtime, arg.initTimeoutMs));
+      obj.setProperty(runtime, "defaultCustomer", JSIConverter<std::optional<margelo::nitro::usercom::UserComModuleUserData>>::toJSI(runtime, arg.defaultCustomer));
       return obj;
     }
     static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
@@ -89,6 +94,7 @@ namespace margelo::nitro {
       if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, "trackAllActivities"))) return false;
       if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, "openLinksInChromeCustomTabs"))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, "initTimeoutMs"))) return false;
+      if (!JSIConverter<std::optional<margelo::nitro::usercom::UserComModuleUserData>>::canConvert(runtime, obj.getProperty(runtime, "defaultCustomer"))) return false;
       return true;
     }
   };
