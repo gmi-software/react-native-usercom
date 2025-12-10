@@ -181,64 +181,89 @@ If you need custom behavior, you can modify the copied `UserComMessagingService.
 
 You must initialize the User.com SDK from JavaScript/TypeScript using a config object. The initialization is asynchronous and returns a Promise:
 
-```typescript
-import { UserComModule } from 'react-native-usercom'
+## API Reference
 
-await UserComModule.initialize({
-  apiKey: 'YOUR_API_KEY',
-  integrationsApiKey: 'YOUR_INTEGRATIONS_API_KEY',
-  domain: 'https://yourdomain.user.com/',
-  // Optional:
-  trackAllActivities: true,
-  openLinksInChromeCustomTabs: false,
-  initTimeoutMs: 2000,
-})
+### Types
+
+#### `UserComModuleAttributeValue`
+
+```ts
+type UserComModuleAttributeValue = number | string | boolean
 ```
 
-If initialization fails (e.g. registration error, timeout), the Promise will reject with an error.
+#### `UserComModuleUserData`
 
-See the [example app](<../example/app/(tabs)/index.tsx>) for a usage pattern.
-
-## API
-
-### `UserComModule.initialize(config: UserComModuleConfig): Promise<void>`
-
-Initializes the User.com SDK. Call this method early in your app lifecycle. Returns a Promise that resolves when the SDK is ready, or rejects on error.
-
-```typescript
-import { UserComModule } from 'react-native-usercom'
-
-await UserComModule.initialize({
-  apiKey: 'YOUR_API_KEY',
-  integrationsApiKey: 'YOUR_INTEGRATIONS_API_KEY',
-  domain: 'https://yourdomain.user.com/',
-  // Optional:
-  trackAllActivities: true,
-  openLinksInChromeCustomTabs: false,
-  initTimeoutMs: 2000,
-  defaultCustomer: {
-    id: 'user_id',
-    email: 'user@email.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    attributes: { plan: 'pro' },
-  },
-})
+```ts
+interface UserComModuleUserData {
+  id: string
+  email?: string
+  firstName?: string
+  lastName?: string
+  attributes?: Record<string, UserComModuleAttributeValue>
+}
 ```
 
-### `UserComModule.registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse>`
+#### `UserComModuleConfig`
 
-Registers or updates a user in the User.com SDK. Returns the user key (string) or null (iOS).
-
-```typescript
-const userKey = await UserComModule.registerUser({
-  id: 'user_id',
-  email: 'user@email.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  attributes: { plan: 'pro' },
-})
+```ts
+interface UserComModuleConfig {
+  apiKey: string
+  integrationsApiKey: string
+  domain: string
+  trackAllActivities?: boolean
+  openLinksInChromeCustomTabs?: boolean
+  initTimeoutMs?: number
+  defaultCustomer?: UserComModuleUserData
+}
 ```
+
+#### `UserComProductEventType`
+
+```ts
+enum UserComProductEventType {
+  AddToCart,
+  Purchase,
+  Liking,
+  AddToObservation,
+  Order,
+  Reservation,
+  Return,
+  View,
+  Click,
+  Detail,
+  Add,
+  Remove,
+  Checkout,
+  CheckoutOption,
+  Refund,
+  PromoClick,
+}
+```
+
+### Methods
+
+#### `initialize(config: UserComModuleConfig): Promise<void>`
+
+Initializes the User.com SDK.
+
+#### `registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse>`
+
+Registers or updates a user in the User.com SDK.
+
+#### `logout(): Promise<void>`
+
+Logs out the current user from the User.com SDK.
+
+#### `sendProductEvent(productId: string, eventType: UserComProductEventType, params?: AnyMap): Promise<void>`
+
+Sends a product event to User.com.
+
+#### `sendCustomEvent(eventName: string, data: AnyMap): Promise<void>`
+
+Sends a custom event to User.com.
+})
+
+````
 
 ### `UserComModule.logout(): Promise<void>`
 
@@ -246,7 +271,7 @@ Logs out the current user from the User.com SDK.
 
 ```typescript
 await UserComModule.logout()
-```
+````
 
 <!-- Uncomment when implemented
 ### `UserComModule.sendEvent(eventName: string, data: string): Promise<void>`
