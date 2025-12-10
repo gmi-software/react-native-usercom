@@ -20,6 +20,7 @@ namespace NitroUsercom { class HybridUserComModuleSpec_cxx; }
 // Include C++ defined types
 #include "HybridUserComModuleSpec.hpp"
 #include "UserComModuleUserData.hpp"
+#include <NitroModules/AnyMap.hpp>
 #include <NitroModules/Null.hpp>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
@@ -290,6 +291,21 @@ namespace margelo::nitro::usercom::bridge::swift {
   Func_void_std__variant_nitro__NullType__std__string_ create_Func_void_std__variant_nitro__NullType__std__string_(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__variant_nitro__NullType__std__string__Wrapper wrap_Func_void_std__variant_nitro__NullType__std__string_(Func_void_std__variant_nitro__NullType__std__string_ value) noexcept {
     return Func_void_std__variant_nitro__NullType__std__string__Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<std::shared_ptr<AnyMap>>
+  /**
+   * Specialized version of `std::optional<std::shared_ptr<AnyMap>>`.
+   */
+  using std__optional_std__shared_ptr_AnyMap__ = std::optional<std::shared_ptr<AnyMap>>;
+  inline std::optional<std::shared_ptr<AnyMap>> create_std__optional_std__shared_ptr_AnyMap__(const std::shared_ptr<AnyMap>& value) noexcept {
+    return std::optional<std::shared_ptr<AnyMap>>(value);
+  }
+  inline bool has_value_std__optional_std__shared_ptr_AnyMap__(const std::optional<std::shared_ptr<AnyMap>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::shared_ptr<AnyMap> get_std__optional_std__shared_ptr_AnyMap__(const std::optional<std::shared_ptr<AnyMap>>& optional) noexcept {
+    return *optional;
   }
   
   // pragma MARK: std::shared_ptr<HybridUserComModuleSpec>

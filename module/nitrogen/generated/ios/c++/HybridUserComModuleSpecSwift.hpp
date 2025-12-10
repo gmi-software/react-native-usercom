@@ -16,6 +16,8 @@ namespace NitroUsercom { class HybridUserComModuleSpec_cxx; }
 namespace margelo::nitro::usercom { struct UserComModuleConfig; }
 // Forward declaration of `UserComModuleUserData` to properly resolve imports.
 namespace margelo::nitro::usercom { struct UserComModuleUserData; }
+// Forward declaration of `UserComProductEventType` to properly resolve imports.
+namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 
 #include <NitroModules/Promise.hpp>
 #include "UserComModuleConfig.hpp"
@@ -25,6 +27,8 @@ namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 #include <variant>
 #include <unordered_map>
 #include <NitroModules/Null.hpp>
+#include "UserComProductEventType.hpp"
+#include <NitroModules/AnyMap.hpp>
 
 #include "NitroUsercom-Swift-Cxx-Umbrella.hpp"
 
@@ -88,6 +92,22 @@ namespace margelo::nitro::usercom {
     }
     inline std::shared_ptr<Promise<void>> logout() override {
       auto __result = _swiftPart.logout();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) override {
+      auto __result = _swiftPart.sendProductEvent(productId, static_cast<int>(eventType), params);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> sendCustomEvent(const std::string& eventName, const std::shared_ptr<AnyMap>& data) override {
+      auto __result = _swiftPart.sendCustomEvent(eventName, data);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

@@ -57,6 +57,8 @@ namespace margelo::nitro::usercom {
     std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) override;
     std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> registerUser(const UserComModuleUserData& userData) override;
     std::shared_ptr<Promise<void>> logout() override;
+    std::shared_ptr<Promise<void>> sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) override;
+    std::shared_ptr<Promise<void>> sendCustomEvent(const std::string& eventName, const std::shared_ptr<AnyMap>& data) override;
 
   private:
     friend HybridBase;

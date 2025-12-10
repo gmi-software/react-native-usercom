@@ -17,6 +17,8 @@ public protocol HybridUserComModuleSpec_protocol: HybridObject {
   func initialize(config: UserComModuleConfig) throws -> Promise<Void>
   func registerUser(userData: UserComModuleUserData) throws -> Promise<UserComModuleRegisterUserResponse>
   func logout() throws -> Promise<Void>
+  func sendProductEvent(productId: String, eventType: UserComProductEventType, params: AnyMap?) throws -> Promise<Void>
+  func sendCustomEvent(eventName: String, data: AnyMap) throws -> Promise<Void>
 }
 
 public extension HybridUserComModuleSpec_protocol {

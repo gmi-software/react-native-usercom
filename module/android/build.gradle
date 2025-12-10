@@ -147,5 +147,8 @@ dependencies {
 
   // Firebase Messaging
   implementation "com.google.firebase:firebase-messaging"
+
+  // User.com custom event creation
+  implementation("net.bytebuddy:byte-buddy:1.14.12")
 }
 

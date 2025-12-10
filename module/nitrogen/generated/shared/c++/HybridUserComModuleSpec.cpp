@@ -17,6 +17,8 @@ namespace margelo::nitro::usercom {
       prototype.registerHybridMethod("initialize", &HybridUserComModuleSpec::initialize);
       prototype.registerHybridMethod("registerUser", &HybridUserComModuleSpec::registerUser);
       prototype.registerHybridMethod("logout", &HybridUserComModuleSpec::logout);
+      prototype.registerHybridMethod("sendProductEvent", &HybridUserComModuleSpec::sendProductEvent);
+      prototype.registerHybridMethod("sendCustomEvent", &HybridUserComModuleSpec::sendCustomEvent);
     });
   }
 

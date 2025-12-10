@@ -1,4 +1,4 @@
-import type { HybridObject } from 'react-native-nitro-modules'
+import type { AnyMap, HybridObject } from 'react-native-nitro-modules'
 
 export type UserComModuleAttributeValue = number | string | boolean
 export type UserComModuleUserKey = string
@@ -24,6 +24,25 @@ export interface UserComModuleConfig {
   // TODO: Custom tabs are not supported yet
 }
 
+export enum UserComProductEventType {
+  AddToCart,
+  Purchase,
+  Liking,
+  AddToObservation,
+  Order,
+  Reservation,
+  Return,
+  View,
+  Click,
+  Detail,
+  Add,
+  Remove,
+  Checkout,
+  CheckoutOption,
+  Refund,
+  PromoClick,
+}
+
 export interface UserComModule extends HybridObject<{
   android: 'kotlin'
   ios: 'swift'
@@ -33,5 +52,10 @@ export interface UserComModule extends HybridObject<{
     userData: UserComModuleUserData
   ): Promise<UserComModuleRegisterUserResponse>
   logout(): Promise<void>
-  // sendEvent(eventName: string, data: string): Promise<void>
+  sendProductEvent(
+    productId: string,
+    eventType: UserComProductEventType,
+    params?: AnyMap
+  ): Promise<void>
+  sendCustomEvent(eventName: string, data: AnyMap): Promise<void>
 }

@@ -4,7 +4,7 @@ import UserSDK
 
 class HybridUserComModule: HybridUserComModuleSpec {
     
-    func initialize(config: UserComModuleConfig) throws -> NitroModules.Promise<Void> {        
+    func initialize(config: UserComModuleConfig) throws -> NitroModules.Promise<Void> {
         NSLog("[UserCom] HybridUserCom native initializing")
         
         let sdk = UserSDK(
@@ -58,6 +58,66 @@ class HybridUserComModule: HybridUserComModuleSpec {
             } else {
                 promise.resolve()
             }
+        }
+        
+        return promise
+    }
+    
+    private func mapToProductEventType(_ eventType: UserComProductEventType) -> UserSDK.EventType {
+        switch eventType {
+            case .addtocart: return .addToCart
+            case .purchase: return .purchase
+            case .liking: return .liking
+            case .addtoobservation: return .addToObservation
+            case .order: return .order
+            case .reservation: return .reservation
+            case .return: return .return
+            case .view: return .view
+            case .click: return .click
+            case .detail: return .detail
+            case .add: return .add
+            case .remove: return .remove
+            case .checkout: return .checkout
+            case .checkoutoption: return .checkoutOption
+            case .refund: return .refund
+            case .promoclick: return .promoClick
+        }
+    }
+
+    func sendProductEvent(productId: String, eventType: UserComProductEventType, params: NitroModules.AnyMap?) throws -> NitroModules.Promise<Void> {
+        let promise = Promise<Void>()
+
+        guard let sdk: UserSDK = UserSDK.default else {
+            return Promise.rejected(
+                withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0)
+            )
+        }
+
+        let sdkEventType = mapToProductEventType(eventType)
+        sdk.sendProductEvent(productId, eventType: sdkEventType, params: params?.toDictionary().compactMapValues{ $0 }) { success, error in
+            if let error = error {
+                promise.reject(withError: error)
+            }
+            promise.resolve()
+        }
+
+        return promise
+    }
+    
+    func sendCustomEvent(eventName: String, data: NitroModules.AnyMap) throws -> NitroModules.Promise<Void> {
+        let promise = Promise<Void>()
+        
+        guard let sdk: UserSDK = UserSDK.default else {
+            return Promise.rejected(
+                withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0)
+            )
+        }
+        
+        sdk.sendEvent(with: eventName, params: data.toDictionary().compactMapValues{ $0 }) { success, error in
+            if let error = error {
+                promise.reject(withError: error)
+            }
+            promise.resolve()
         }
         
         return promise

@@ -11,6 +11,8 @@
 namespace margelo::nitro::usercom { struct UserComModuleConfig; }
 // Forward declaration of `UserComModuleUserData` to properly resolve imports.
 namespace margelo::nitro::usercom { struct UserComModuleUserData; }
+// Forward declaration of `UserComProductEventType` to properly resolve imports.
+namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/JPromise.hpp>
@@ -26,6 +28,10 @@ namespace margelo::nitro::usercom { struct UserComModuleUserData; }
 #include "JUserComModuleUserData.hpp"
 #include <unordered_map>
 #include "JUserComModuleAttributeValue.hpp"
+#include "UserComProductEventType.hpp"
+#include "JUserComProductEventType.hpp"
+#include <NitroModules/AnyMap.hpp>
+#include <NitroModules/JAnyMap.hpp>
 
 namespace margelo::nitro::usercom {
 
@@ -93,6 +99,36 @@ namespace margelo::nitro::usercom {
   std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::logout() {
     static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>()>("logout");
     auto __result = method(_javaPart);
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* productId */, jni::alias_ref<JUserComProductEventType> /* eventType */, jni::alias_ref<JAnyMap::javaobject> /* params */)>("sendProductEvent");
+    auto __result = method(_javaPart, jni::make_jstring(productId), JUserComProductEventType::fromCpp(eventType), params.has_value() ? JAnyMap::create(params.value()) : nullptr);
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::sendCustomEvent(const std::string& eventName, const std::shared_ptr<AnyMap>& data) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* eventName */, jni::alias_ref<JAnyMap::javaobject> /* data */)>("sendCustomEvent");
+    auto __result = method(_javaPart, jni::make_jstring(eventName), JAnyMap::create(data));
     return [&]() {
       auto __promise = Promise<void>::create();
       __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {

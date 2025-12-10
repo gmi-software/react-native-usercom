@@ -12,6 +12,7 @@ import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.Promise
 import com.margelo.nitro.core.NullType
+import com.margelo.nitro.core.AnyMap
 import com.margelo.nitro.core.HybridObject
 
 /**
@@ -58,6 +59,14 @@ abstract class HybridUserComModuleSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun logout(): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun sendProductEvent(productId: String, eventType: UserComProductEventType, params: AnyMap?): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun sendCustomEvent(eventName: String, data: AnyMap): Promise<Unit>
 
   private external fun initHybrid(): HybridData
 

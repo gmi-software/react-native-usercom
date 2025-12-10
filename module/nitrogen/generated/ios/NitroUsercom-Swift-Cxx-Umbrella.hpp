@@ -14,11 +14,15 @@ namespace margelo::nitro::usercom { class HybridUserComModuleSpec; }
 namespace margelo::nitro::usercom { struct UserComModuleConfig; }
 // Forward declaration of `UserComModuleUserData` to properly resolve imports.
 namespace margelo::nitro::usercom { struct UserComModuleUserData; }
+// Forward declaration of `UserComProductEventType` to properly resolve imports.
+namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 
 // Include C++ defined types
 #include "HybridUserComModuleSpec.hpp"
 #include "UserComModuleConfig.hpp"
 #include "UserComModuleUserData.hpp"
+#include "UserComProductEventType.hpp"
+#include <NitroModules/AnyMap.hpp>
 #include <NitroModules/Null.hpp>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>

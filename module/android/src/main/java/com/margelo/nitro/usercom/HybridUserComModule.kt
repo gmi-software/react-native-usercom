@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.NitroModules
+import com.margelo.nitro.core.AnyMap
 import com.margelo.nitro.core.Promise
 import com.margelo.nitro.core.resolve
 import com.margelo.nitro.core.resolved
@@ -13,6 +14,7 @@ import com.user.sdk.UserCom
 import com.user.sdk.customer.Customer
 import com.user.sdk.customer.CustomerUpdateCallback
 import com.user.sdk.customer.RegisterResponse
+import com.user.sdk.events.ProductEventType
 
 @Keep
 @DoNotStrip
@@ -120,6 +122,61 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
         }
         instance.logout()
+
+        return Promise.resolved()
+    }
+
+    override fun sendProductEvent(
+        productId: String,
+        eventType: UserComProductEventType,
+        params: AnyMap?
+    ): Promise<Unit> {
+        val instance = try {
+            UserCom.getInstance()
+        } catch (_: Throwable) {
+            return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
+        }
+
+        val eventType = when (eventType) {
+            UserComProductEventType.ADDTOCART -> ProductEventType.ADD_TO_CART
+            UserComProductEventType.PURCHASE -> ProductEventType.PURCHASE
+            UserComProductEventType.LIKING -> ProductEventType.LIKING
+            UserComProductEventType.ADDTOOBSERVATION -> ProductEventType.ADD_TO_OBSERVATION
+            UserComProductEventType.ORDER -> ProductEventType.ORDER
+            UserComProductEventType.RESERVATION -> ProductEventType.RESERVATION
+            UserComProductEventType.RETURN -> ProductEventType.RETURN
+            UserComProductEventType.VIEW -> ProductEventType.VIEW
+            UserComProductEventType.CLICK -> ProductEventType.CLICK
+            UserComProductEventType.DETAIL -> ProductEventType.DETAIL
+            UserComProductEventType.ADD -> ProductEventType.ADD
+            UserComProductEventType.REMOVE -> ProductEventType.REMOVE
+            UserComProductEventType.CHECKOUT -> ProductEventType.CHECKOUT
+            UserComProductEventType.CHECKOUTOPTION -> ProductEventType.CHECKOUT_OPTION
+            UserComProductEventType.REFUND -> ProductEventType.REFUND
+            UserComProductEventType.PROMOCLICK -> ProductEventType.PROMO_CLICK
+        }
+
+        instance.sendProductEvent(productId, eventType, params?.toMap())
+        return Promise.resolved()
+    }
+
+    override fun sendCustomEvent(
+        eventName: String,
+        data: AnyMap
+    ): Promise<Unit> {
+        val instance = try {
+            UserCom.getInstance()
+        } catch (_: Throwable) {
+            return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val experimentalEvent = UserComEventFactory().createEventClass(
+            eventName,
+            data.toMap().filterValues { it != null } as Map<String, Any>)
+
+        instance.sendEvent(experimentalEvent)
+
         return Promise.resolved()
     }
 }
