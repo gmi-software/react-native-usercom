@@ -1,7 +1,7 @@
 {
   "name": "react-native-usercom",
   "version": "0.0.1",
-  "description": "react-native-usercom",
+  "description": "Integrates User.com platform features directly in your React Native app",
   "main": "lib/index",
   "module": "lib/index",
   "types": "lib/index.d.ts",
@@ -42,14 +42,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mrousavy/nitro.git"
+    "url": "git+https://github.com/gmi-software/react-native-usercom.git"
   },
-  "author": "Marc Rousavy <me@mrousavy.com> (https://github.com/mrousavy)",
+  "author": "gmi.software",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mrousavy/nitro/issues"
+    "url": "https://github.com/gmi-software/react-native-usercom/issues"
   },
-  "homepage": "https://github.com/mrousavy/nitro#readme",
+  "homepage": "https://github.com/gmi-software/react-native-usercom#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
