@@ -1,5 +1,6 @@
 package com.margelo.nitro.usercom
 
+import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -14,7 +15,9 @@ import com.user.sdk.UserCom
 import com.user.sdk.customer.Customer
 import com.user.sdk.customer.CustomerUpdateCallback
 import com.user.sdk.customer.RegisterResponse
+import com.user.sdk.events.Event
 import com.user.sdk.events.ProductEventType
+import com.user.sdk.events.UserComEvent
 
 @Keep
 @DoNotStrip
@@ -160,6 +163,11 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         return Promise.resolved()
     }
 
+    private fun isPredefinedEvent(): Boolean {
+        // TODO: Unsupported yet
+        return false
+    }
+
     override fun sendCustomEvent(
         eventName: String,
         data: AnyMap
@@ -170,13 +178,18 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
         }
 
-        @Suppress("UNCHECKED_CAST")
-        val experimentalEvent = UserComEventFactory().createEventClass(
-            eventName,
-            data.toMap().filterValues { it != null } as Map<String, Any>)
+        if (isPredefinedEvent()) {
+            return Promise.rejected(Throwable("Predefined events are not supported yet"))
+        }
 
-        instance.sendEvent(experimentalEvent)
-
+        instance.sendEvent(GenericUserComEvent(data.toMap()))
         return Promise.resolved()
+    }
+}
+
+@Event(name = "generic")
+class GenericUserComEvent(private val metadata: Map<String, Any?>) : UserComEvent {
+    override fun toFlat(): Map<String, Any?> {
+        return metadata
     }
 }

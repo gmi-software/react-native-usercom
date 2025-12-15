@@ -7,5 +7,8 @@
   ],
   "trustedDependencies": [
     "react-native-usercom"
-  ]
+  ],
+  "dependencies": {
+    "@react-native-firebase/app": "^23.5.0"
+  }
 }

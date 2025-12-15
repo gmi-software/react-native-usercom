@@ -1,13 +1,16 @@
 package com.margelo.nitro.usercom
 
+import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.user.sdk.UserCom
+//import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService
 
 // TODO: Messaging service should extend ReactNativeMessagingService for react-native-messaging to work properly
 class UserComMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        UserCom.getInstance().onNotification(this, remoteMessage)
+        val success = UserCom.getInstance().onNotification(this, remoteMessage)
+        Log.d("UserComMessagingService", success.toString())
         super.onMessageReceived(remoteMessage)
     }
 

@@ -43,7 +43,7 @@ export default function HomeScreen() {
         <Button
           title="Send custom event"
           onPress={() =>
-            sendCustomEvent("custom_event", { myCustomKey: "myCustomValue" })
+            sendCustomEvent("generic", { json: JSON.stringify({hello: 'world'}) })
           }
         />
         <Button
