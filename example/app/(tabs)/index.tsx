@@ -4,7 +4,7 @@ import { Button, StyleSheet } from "react-native";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedView } from "@/components/themed-view";
 import { useUserComHandler } from "@/hooks/useUserComHandler";
-import { UserComProductEventType } from "react-native-usercom";
+import { UserComProductEventType } from "@gmisoftware/react-native-usercom";
 
 export default function HomeScreen() {
   const {

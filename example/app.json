@@ -41,7 +41,7 @@
         }
       ],
       [
-        "react-native-usercom",
+        "@gmisoftware/react-native-usercom",
         {
           "androidNotificationChannelName": "Notifications"
         }

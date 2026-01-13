@@ -4,7 +4,7 @@ import {
   UserComModule,
   UserComModuleUserData,
   UserComProductEventType,
-} from "react-native-usercom";
+} from "@gmisoftware/react-native-usercom";
 
 export const useUserComHandler = () => {
   const initialize = useCallback(
