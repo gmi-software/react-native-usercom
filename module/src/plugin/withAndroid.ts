@@ -1,5 +1,4 @@
 import {
-  withProjectBuildGradle,
   withAppBuildGradle,
   withStringsXml,
   withAndroidManifest,
@@ -12,35 +11,7 @@ type ManifestService = NonNullable<
   AndroidConfig.Manifest.ManifestApplication['service']
 >[number]
 
-const USERCOM_MAVEN_REPO = 'https://android-sdk.user.com'
 const USERCOM_DEPENDENCY = 'com.user:android-sdk:1.2.8'
-
-/**
- * Adds User.com Maven repository to android/build.gradle (allprojects.repositories)
- */
-const withUserComMavenRepo: ConfigPlugin = (config) => {
-  return withProjectBuildGradle(config, (modConfig) => {
-    const contents = modConfig.modResults.contents
-
-    if (contents.includes(USERCOM_MAVEN_REPO)) {
-      return modConfig
-    }
-
-    const allProjectsRepoPattern = /allprojects\s*\{[\s\S]*?repositories\s*\{/
-
-    if (allProjectsRepoPattern.test(contents)) {
-      modConfig.modResults.contents = contents.replace(
-        allProjectsRepoPattern,
-        (match) => {
-          return `${match}
-    maven { url '${USERCOM_MAVEN_REPO}' }`
-        }
-      )
-    }
-
-    return modConfig
-  })
-}
 
 /**
  * Adds User.com SDK dependency to app/build.gradle
@@ -149,7 +120,6 @@ export const withAndroid: ConfigPlugin<UserComPluginOptions> = (
   config,
   options
 ) => {
-  config = withUserComMavenRepo(config)
   config = withUserComDependency(config)
   config = withNotificationChannelName(config, options)
   config = withUserComMessagingService(config)

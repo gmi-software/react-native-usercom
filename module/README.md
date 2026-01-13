@@ -27,23 +27,6 @@ Download the configuration files from Firebase Console:
 - **iOS**: `GoogleService-Info.plist` - place it in your project root
 - **Android**: `google-services.json` - place it in your project root
 
-### 3. Configure app.json (Expo)
-
-Add the Firebase configuration files to your `app.json`:
-
-```json
-{
-  "expo": {
-    "ios": {
-      "googleServicesFile": "./GoogleService-Info.plist"
-    },
-    "android": {
-      "googleServicesFile": "./google-services.json"
-    }
-  }
-}
-```
-
 ## Configuration
 
 ### Expo
@@ -74,6 +57,8 @@ Add the plugins to your `app.json`:
   }
 }
 ```
+
+Note (Android / Expo): if you're using Expo with `prebuild`, you must ensure the User.com Maven repository is present in the generated Android Gradle files. The recommended approach is to inject the repository using `expo-build-properties` (configure it in `app.json` / `app.config.js`) so it is added automatically during `prebuild`. If you don't use `expo-build-properties`, add the required `maven { url 'https://android-sdk.user.com' }` manually to the generated `android/build.gradle` after running `npx expo prebuild`.
 
 #### Plugin Options
 
@@ -130,10 +115,13 @@ For Android, add to your `android/build.gradle`:
 ```gradle
 allprojects {
   repositories {
+    // ...other repositories...
     maven { url 'https://android-sdk.user.com' }
   }
 }
 ```
+
+This repository is required so Gradle can resolve User.com artifacts (e.g. `com.user:android-sdk`).
 
 And in `android/app/build.gradle`:
 
