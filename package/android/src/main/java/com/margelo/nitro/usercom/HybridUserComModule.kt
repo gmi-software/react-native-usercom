@@ -159,7 +159,7 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             UserComProductEventType.PROMOCLICK -> ProductEventType.PROMO_CLICK
         }
 
-        instance.sendProductEvent(productId, eventType, params?.toMap())
+        instance.sendProductEvent(productId, eventType, params?.toHashMap())
         return Promise.resolved()
     }
 
@@ -182,7 +182,7 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             return Promise.rejected(Throwable("Predefined events are not supported yet"))
         }
 
-        instance.sendEvent(GenericUserComEvent(data.toMap()))
+        instance.sendEvent(GenericUserComEvent(data.toHashMap()))
         return Promise.resolved()
     }
 }
