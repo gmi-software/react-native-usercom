@@ -37,6 +37,11 @@
         {
           "ios": {
             "useFrameworks": "static"
+          },
+          "android": {
+            "extraMavenRepos": [
+              "https://android-sdk.user.com"
+            ]
           }
         }
       ],
