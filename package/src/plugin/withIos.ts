@@ -41,6 +41,10 @@ export const withIos: ConfigPlugin = (config) => {
           return `${match}\n\n  # User.com SDK\n  ${USERCOM_IOS_POD}`
         })
       }
+    } else {
+      console.warn(
+        '[UserCom] Could not find use_expo_modules! in Podfile. UserSDK pod was not added automatically.'
+      )
     }
 
     // Add post_install patch if not already present
@@ -51,6 +55,10 @@ export const withIos: ConfigPlugin = (config) => {
         contents = contents.replace(postInstallPattern, (match) => {
           return `${match}\n${USERCOM_POST_INSTALL_PATCH}`
         })
+      } else {
+          console.warn(
+              '[UserCom] Could not find post_install block in Podfile. Deployment target patch was not applied.'
+          )
       }
     }
 
