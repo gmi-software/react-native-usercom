@@ -85,7 +85,6 @@ class HybridUserComModule: HybridUserComModuleSpec {
     }
 
     func sendProductEvent(productId: String, eventType: UserComProductEventType, params: NitroModules.AnyMap?) throws -> NitroModules.Promise<Void> {
-        let promise = Promise<Void>()
 
         guard let sdk: UserSDK = UserSDK.default else {
             return Promise.rejected(
@@ -93,19 +92,21 @@ class HybridUserComModule: HybridUserComModuleSpec {
             )
         }
 
+        let promise = Promise<Void>()
+        
         let sdkEventType = mapToProductEventType(eventType)
         sdk.sendProductEvent(productId, eventType: sdkEventType, params: params?.toDictionary().compactMapValues{ $0 }) { success, error in
             if let error = error {
                 promise.reject(withError: error)
+            } else {
+                promise.resolve()
             }
-            promise.resolve()
         }
 
         return promise
     }
     
     func sendCustomEvent(eventName: String, data: NitroModules.AnyMap) throws -> NitroModules.Promise<Void> {
-        let promise = Promise<Void>()
         
         guard let sdk: UserSDK = UserSDK.default else {
             return Promise.rejected(
@@ -113,11 +114,13 @@ class HybridUserComModule: HybridUserComModuleSpec {
             )
         }
         
+        let promise = Promise<Void>()
         sdk.sendEvent(with: eventName, params: data.toDictionary().compactMapValues{ $0 }) { success, error in
             if let error = error {
                 promise.reject(withError: error)
+            } else {
+                promise.resolve()
             }
-            promise.resolve()
         }
         
         return promise
