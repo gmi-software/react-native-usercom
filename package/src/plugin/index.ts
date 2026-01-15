@@ -8,9 +8,6 @@ export interface UserComPluginOptions {
    * @default "Notifications"
    */
   androidNotificationChannelName?: string
-  apiKey: string
-  integrationsApiKey: string
-  domain: string
 }
 
 /**
