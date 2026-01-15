@@ -2,7 +2,7 @@ import { withPodfile } from '@expo/config-plugins'
 import type { ConfigPlugin } from '@expo/config-plugins'
 
 const USERCOM_IOS_POD =
-  "pod 'UserSDK', :git => 'https://github.com/UserEngage/iOS-SDK'"
+  "pod 'UserSDK', :git => 'https://github.com/UserEngage/iOS-SDK', :commit => 'bf7f2803413ca3de68fd426f888a02ad7a0d1e2a'"
 
 /**
  * Post-install script to patch UserSDK swiftinterface files
