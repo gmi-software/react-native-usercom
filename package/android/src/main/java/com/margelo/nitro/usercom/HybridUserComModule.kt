@@ -64,7 +64,7 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         val handler = Handler(Looper.getMainLooper())
 
         val timeoutRunnable = Runnable {
-            promise.reject(Throwable("UserCom SDK have not been initialized withing given timeout"))
+            promise.reject(Throwable("UserCom SDK have not been initialized within given timeout"))
         }
 
         handler.postDelayed(timeoutRunnable, config.initTimeoutMs?.toLong() ?: defaultInitTimeout)
