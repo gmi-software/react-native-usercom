@@ -7,7 +7,7 @@ class HybridUserComModule: HybridUserComModuleSpec {
     func initialize(config: UserComModuleConfig) throws -> NitroModules.Promise<Void> {
         NSLog("[UserCom] HybridUserCom native initializing")
         
-        let sdk = UserSDK(
+        UserSDK(
             application: UIApplication.shared,
             apiKey: config.apiKey,
             baseURL: config.domain,
