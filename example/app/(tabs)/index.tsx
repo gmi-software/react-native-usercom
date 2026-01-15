@@ -38,7 +38,7 @@ export default function HomeScreen() {
         />
         <Button
           title="Register user"
-          onPress={() => registerUser({ id: "react-native-usercom-test" })}
+          onPress={() => registerUser({ id: "react-native-usercom-test", firstName: "Test user!" })}
         />
         <Button
           title="Send custom event"
