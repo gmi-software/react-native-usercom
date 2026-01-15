@@ -46,7 +46,7 @@ class HybridUserComModule : HybridUserComModuleSpec() {
     override fun initialize(config: UserComModuleConfig): Promise<Unit> {
         val application = NitroModules.applicationContext?.currentActivity?.application
             ?: return Promise.rejected(
-                Throwable()
+                Throwable("Application context is not available")
             )
 
         val instance = try {
