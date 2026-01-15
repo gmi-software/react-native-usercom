@@ -148,8 +148,5 @@ dependencies {
   // Firebase Messaging
   implementation "com.google.firebase:firebase-messaging"
   implementation project(':react-native-firebase_messaging')
-
-  // User.com custom event creation
-  implementation("net.bytebuddy:byte-buddy:1.14.12")
 }
 
