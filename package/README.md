@@ -95,7 +95,6 @@ npx expo prebuild --clean
 
 ### Bare React Native
 
-pod 'UserSDK', :git => 'https://github.com/UserEngage/iOS-SDK'
 For bare React Native projects, ensure your `Podfile` includes:
 
 ```ruby
@@ -249,9 +248,6 @@ Sends a product event to User.com.
 #### `sendCustomEvent(eventName: string, data: AnyMap): Promise<void>`
 
 Sends a custom event to User.com.
-})
-
-````
 
 ### `UserComModule.logout(): Promise<void>`
 
@@ -260,15 +256,6 @@ Logs out the current user from the User.com SDK.
 ```typescript
 await UserComModule.logout()
 ````
-
-<!-- Uncomment when implemented
-### `UserComModule.sendEvent(eventName: string, data: string): Promise<void>`
-Sends a custom event to User.com.
-
-```typescript
-await UserComModule.sendEvent('purchase', JSON.stringify({ amount: 100 }))
-```
--->
 
 ## Requirements
 

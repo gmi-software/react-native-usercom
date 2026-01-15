@@ -34,6 +34,10 @@ const withUserComDependency: ConfigPlugin = (config) => {
     implementation("${USERCOM_DEPENDENCY}")`
         }
       )
+    } else {
+        console.warn(
+            '[UserCom] Could not find dependencies block in build.gradle. SDK dependency was not added.'
+        );
     }
 
     return modConfig
