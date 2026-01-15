@@ -41,6 +41,12 @@ class HybridUserComModule: HybridUserComModuleSpec {
             UserSDK.UserDataKey.userId : userData.id
         ], completionCb)
         
+        if let attributes = userData.attributes {
+            sdk.setCustomUserData(attributes.mapValues { value in
+                return value
+            })
+        }
+        
         return promise
     }
     
