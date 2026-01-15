@@ -33,6 +33,13 @@ Download the configuration files from Firebase Console:
 
 Add the plugins to your `app.json`:
 
+**Please note**\
+*Regarding Expo 54*\
+https://github.com/expo/expo/issues/39607#issuecomment-3337284928 \
+`buildReactNativeFromSource` is required for Expo 54 (this is a workaround and will give you longer build-times (no longer than in the previous Expo SDKs though)\
+`"forceStaticLinking": ["RNFBApp"]` might be sufficient but was not tested
+
+
 ```json
 {
   "expo": {
@@ -48,7 +55,8 @@ Add the plugins to your `app.json`:
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "buildReactNativeFromSource": true // Regarding Expo 54 (read note above)
           }
         }
       ],
