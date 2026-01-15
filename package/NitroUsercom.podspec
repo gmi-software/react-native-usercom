@@ -27,6 +27,6 @@ Pod::Spec.new do |s|
 
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
-  s.dependency 'UserSDK'
+  s.dependency 'UserSDK', '~> 0.2.0'
   install_modules_dependencies(s)
 end
