@@ -143,7 +143,7 @@ dependencies {
   // dependencies required for UserComMessagingService
   
   // Firebase BOM
-  implementation platform("com.google.firebase:firebase-bom:32.2.2")
+  implementation platform("com.google.firebase:firebase-bom:34.7.0")
 
   // Firebase Messaging
   implementation "com.google.firebase:firebase-messaging"
