@@ -131,4 +131,23 @@ class HybridUserComModule: HybridUserComModuleSpec {
         
         return promise
     }
+    
+    func sendScreenEvent(screenName: String) throws -> NitroModules.Promise<Void> {
+        guard let sdk: UserSDK = UserSDK.default else {
+            return Promise.rejected(
+                withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0)
+            )
+        }
+        
+        let promise = Promise<Void>()
+        sdk.trackScreen(with: screenName) { success, error in
+            if let error = error {
+                promise.reject(withError: error)
+                return
+            }
+            promise.resolve()
+        }
+        
+        return promise
+    }
 }

@@ -66,6 +66,7 @@ namespace margelo::nitro::usercom {
       virtual std::shared_ptr<Promise<void>> logout() = 0;
       virtual std::shared_ptr<Promise<void>> sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) = 0;
       virtual std::shared_ptr<Promise<void>> sendCustomEvent(const std::string& eventName, const std::shared_ptr<AnyMap>& data) = 0;
+      virtual std::shared_ptr<Promise<void>> sendScreenEvent(const std::string& screenName) = 0;
 
     protected:
       // Hybrid Setup

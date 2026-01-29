@@ -141,5 +141,20 @@ namespace margelo::nitro::usercom {
       return __promise;
     }();
   }
+  std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::sendScreenEvent(const std::string& screenName) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* screenName */)>("sendScreenEvent");
+    auto __result = method(_javaPart, jni::make_jstring(screenName));
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
 
 } // namespace margelo::nitro::usercom

@@ -185,6 +185,17 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         instance.sendEvent(GenericUserComEvent(data.toHashMap()))
         return Promise.resolved()
     }
+
+    override fun sendScreenEvent(screenName: String): Promise<Unit> {
+        val instance = try {
+            UserCom.getInstance()
+        } catch (_: Throwable) {
+            return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
+        }
+
+        instance.trackScreen(screenName)
+        return Promise.resolved()
+    }
 }
 
 @Event(name = "generic")

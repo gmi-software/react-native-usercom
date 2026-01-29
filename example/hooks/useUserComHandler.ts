@@ -62,6 +62,16 @@ export const useUserComHandler = () => {
     []
   );
 
+  const sendScreenEvent = useCallback(async (screenName: string) => {
+    try {
+      console.log("JS:UserCom:sendScreenEvent start");
+      await UserComModule.sendScreenEvent(screenName);
+      console.log("JS:UserCom:sendScreenEvent done");
+    } catch (error) {
+      console.error("JS:UserCom:sendScreenEvent:error", error);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     console.log("JS:UserCom:logout");
     try {
@@ -77,6 +87,7 @@ export const useUserComHandler = () => {
     registerUser,
     sendCustomEvent,
     sendProductEvent,
+    sendScreenEvent,
     logout,
   };
 };

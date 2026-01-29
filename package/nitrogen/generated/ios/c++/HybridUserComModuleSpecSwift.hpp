@@ -114,6 +114,14 @@ namespace margelo::nitro::usercom {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline std::shared_ptr<Promise<void>> sendScreenEvent(const std::string& screenName) override {
+      auto __result = _swiftPart.sendScreenEvent(screenName);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
 
   private:
     NitroUsercom::HybridUserComModuleSpec_cxx _swiftPart;

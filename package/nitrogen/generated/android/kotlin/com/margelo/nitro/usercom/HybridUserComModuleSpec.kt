@@ -67,6 +67,10 @@ abstract class HybridUserComModuleSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun sendCustomEvent(eventName: String, data: AnyMap): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun sendScreenEvent(screenName: String): Promise<Unit>
 
   private external fun initHybrid(): HybridData
 

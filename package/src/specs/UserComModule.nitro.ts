@@ -58,4 +58,5 @@ export interface UserComModule extends HybridObject<{
     params?: AnyMap
   ): Promise<void>
   sendCustomEvent(eventName: string, data: AnyMap): Promise<void>
+  sendScreenEvent(screenName: string): Promise<void>
 }

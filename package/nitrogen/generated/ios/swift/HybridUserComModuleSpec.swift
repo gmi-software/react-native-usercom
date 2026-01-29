@@ -19,6 +19,7 @@ public protocol HybridUserComModuleSpec_protocol: HybridObject {
   func logout() throws -> Promise<Void>
   func sendProductEvent(productId: String, eventType: UserComProductEventType, params: AnyMap?) throws -> Promise<Void>
   func sendCustomEvent(eventName: String, data: AnyMap) throws -> Promise<Void>
+  func sendScreenEvent(screenName: String) throws -> Promise<Void>
 }
 
 public extension HybridUserComModuleSpec_protocol {
