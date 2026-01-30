@@ -53,7 +53,7 @@
     },
     "package": {
       "name": "@gmisoftware/react-native-usercom",
-      "version": "0.0.3",
+      "version": "0.0.5",
       "devDependencies": {
         "@react-native/eslint-config": "0.82.0",
         "@types/react": "^19.1.03",
