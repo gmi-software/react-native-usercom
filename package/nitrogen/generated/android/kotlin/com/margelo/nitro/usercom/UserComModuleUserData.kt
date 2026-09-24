@@ -31,6 +31,9 @@ data class UserComModuleUserData(
   val lastName: String?,
   @DoNotStrip
   @Keep
+  val phoneNumber: String?,
+  @DoNotStrip
+  @Keep
   val attributes: Map<String, UserComModuleAttributeValue>?
 ) {
   /* primary constructor */
@@ -43,8 +46,8 @@ data class UserComModuleUserData(
     @Keep
     @Suppress("unused")
     @JvmStatic
-    private fun fromCpp(id: String, email: String?, firstName: String?, lastName: String?, attributes: Map<String, UserComModuleAttributeValue>?): UserComModuleUserData {
-      return UserComModuleUserData(id, email, firstName, lastName, attributes)
+    private fun fromCpp(id: String, email: String?, firstName: String?, lastName: String?, phoneNumber: String?, attributes: Map<String, UserComModuleAttributeValue>?): UserComModuleUserData {
+      return UserComModuleUserData(id, email, firstName, lastName, phoneNumber, attributes)
     }
   }
 }

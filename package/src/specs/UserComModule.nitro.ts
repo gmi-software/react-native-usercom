@@ -10,6 +10,7 @@ export interface UserComModuleUserData {
   email?: string
   firstName?: string
   lastName?: string
+  phoneNumber?: string
   attributes?: Record<string, UserComModuleAttributeValue>
 }
 
