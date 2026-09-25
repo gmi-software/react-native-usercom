@@ -1,22 +1,55 @@
 import Foundation
 import UIKit
 import NitroModules
-import UserSDK
+import UserComSDK
 
 class HybridUserComModule: HybridUserComModuleSpec {
     
     func initialize(config: UserComModuleConfig) throws -> NitroModules.Promise<Void> {
         NSLog("[UserCom] HybridUserCom native initializing")
         
-        UserSDK(
+        let domain = config.domain.trimmingCharacters(in: .whitespacesAndNewlines)
+        let host = domain.replacingOccurrences(of: "^https?://", with: "", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let sdk = UserSDK(
             application: UIApplication.shared,
             apiKey: config.apiKey,
-            baseURL: config.domain,
+            baseURL: host,
             shouldTrackActivities: config.trackAllActivities ?? false
         )
         
-        NSLog("[UserCom] HybridUserComModule initialized")
-        return Promise.resolved()
+        let promise = Promise<Void>()
+        let stateLock = NSLock()
+        var settled = false
+        let settle: (Error?) -> Void = { error in
+            stateLock.lock()
+            guard !settled else {
+                stateLock.unlock()
+                return
+            }
+            settled = true
+            stateLock.unlock()
+
+            if let error = error {
+                promise.reject(withError: error)
+            } else {
+                promise.resolve()
+            }
+        }
+        let timeoutSeconds = max(0, (config.initTimeoutMs ?? 10000) / 1000)
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeoutSeconds) {
+            settle(NSError(domain: "User.com initialization timed out", code: 1))
+        }
+        sdk.ping { success, error in
+            if let error = error {
+                settle(error)
+            } else if !success {
+                settle(NSError(domain: "User.com ping failed", code: 1))
+            } else {
+                settle(nil)
+            }
+        }
+        return promise
     }
     
     func registerUser(userData: UserComModuleUserData) throws -> NitroModules.Promise<UserComModuleRegisterUserResponse> {
@@ -27,25 +60,36 @@ class HybridUserComModule: HybridUserComModuleSpec {
             return promise
         }
         
-        let completionCb: (Bool, Error?) -> Void = { (success: Bool, error: Error?) in
+        var standardData: [UserSDK.UserDataKey: String?] = [.userId: userData.id]
+        if let firstName = userData.firstName { standardData[.firstName] = firstName }
+        if let lastName = userData.lastName { standardData[.lastName] = lastName }
+        if let email = userData.email { standardData[.email] = email }
+        if let phoneNumber = userData.phoneNumber { standardData[.phone] = phoneNumber }
+
+        sdk.setUserData(standardData) { success, error in
             if let error = error {
                 promise.reject(withError: error)
-            } else {
-                promise.resolve(withResult: UserComModuleRegisterUserResponse.first(NullType.null))
+                return
             }
-        }
-        
-        sdk.setUserData([
-            UserSDK.UserDataKey.firstName : userData.firstName,
-            UserSDK.UserDataKey.lastName : userData.lastName,
-            UserSDK.UserDataKey.email : userData.email,
-            UserSDK.UserDataKey.userId : userData.id
-        ], completionCb)
-        
-        if let attributes = userData.attributes {
-            sdk.setCustomUserData(attributes.mapValues { value in
-                return value
-            })
+            guard success else {
+                promise.reject(withError: NSError(domain: "User.com identify failed", code: 1))
+                return
+            }
+
+            guard let attributes = userData.attributes, !attributes.isEmpty else {
+                promise.resolve(withResult: UserComModuleRegisterUserResponse.first(NullType.null))
+                return
+            }
+
+            sdk.setCustomUserData(attributes.mapValues { $0 }) { attributesSuccess, attributesError in
+                if let attributesError = attributesError {
+                    promise.reject(withError: attributesError)
+                } else if !attributesSuccess {
+                    promise.reject(withError: NSError(domain: "User.com attributes update failed", code: 1))
+                } else {
+                    promise.resolve(withResult: UserComModuleRegisterUserResponse.first(NullType.null))
+                }
+            }
         }
         
         return promise
@@ -59,9 +103,11 @@ class HybridUserComModule: HybridUserComModuleSpec {
             return promise
         }
         
-        sdk.logout { success, error in
+        sdk.logout(fcmToken: nil) { success, error in
             if let error = error {
                 promise.reject(withError: error)
+            } else if !success {
+                promise.reject(withError: NSError(domain: "User.com logout failed", code: 1))
             } else {
                 promise.resolve()
             }
@@ -105,6 +151,8 @@ class HybridUserComModule: HybridUserComModuleSpec {
         sdk.sendProductEvent(productId, eventType: sdkEventType, params: params?.toDictionary().compactMapValues{ $0 }) { success, error in
             if let error = error {
                 promise.reject(withError: error)
+            } else if !success {
+                promise.reject(withError: NSError(domain: "User.com product event failed", code: 1))
             } else {
                 promise.resolve()
             }
@@ -125,6 +173,8 @@ class HybridUserComModule: HybridUserComModuleSpec {
         sdk.sendEvent(with: eventName, params: data.toDictionary().compactMapValues{ $0 }) { success, error in
             if let error = error {
                 promise.reject(withError: error)
+            } else if !success {
+                promise.reject(withError: NSError(domain: "User.com custom event failed", code: 1))
             } else {
                 promise.resolve()
             }
@@ -146,7 +196,11 @@ class HybridUserComModule: HybridUserComModuleSpec {
                 promise.reject(withError: error)
                 return
             }
-            promise.resolve()
+            if success {
+                promise.resolve()
+            } else {
+                promise.reject(withError: NSError(domain: "User.com screen event failed", code: 1))
+            }
         }
         
         return promise

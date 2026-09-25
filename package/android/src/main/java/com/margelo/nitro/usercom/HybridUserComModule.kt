@@ -1,6 +1,5 @@
 package com.margelo.nitro.usercom
 
-import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -15,15 +14,13 @@ import com.user.sdk.UserCom
 import com.user.sdk.customer.Customer
 import com.user.sdk.customer.CustomerUpdateCallback
 import com.user.sdk.customer.RegisterResponse
-import com.user.sdk.events.Event
 import com.user.sdk.events.ProductEventType
-import com.user.sdk.events.UserComEvent
 
 @Keep
 @DoNotStrip
 class HybridUserComModule : HybridUserComModuleSpec() {
 
-    private val defaultInitTimeout = 1000L
+    private val defaultInitTimeout = 10000L
 
     private fun buildCustomer(customerData: UserComModuleUserData): Customer {
         val customer = Customer()
@@ -31,13 +28,19 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         customerData.email?.let { customer.email(it) }
         customerData.firstName?.let { customer.firstName(it) }
         customerData.lastName?.let { customer.lastName(it) }
+        customerData.phoneNumber?.let { customer.attr("phone_number", it) }
         customerData.attributes?.forEach { (key, value) ->
             val attrVal = value.asFirstOrNull()
                 ?: value.asSecondOrNull() ?: value.asThirdOrNull()
             when (attrVal) {
                 is String -> customer.attr(key, attrVal)
                 is Boolean -> customer.attr(key, attrVal)
-                is Double -> customer.attr(key, attrVal.toInt())
+                is Double -> {
+                    require(attrVal.isFinite() && attrVal % 1.0 == 0.0 && attrVal >= Int.MIN_VALUE && attrVal <= Int.MAX_VALUE) {
+                        "Android User.com SDK does not support decimal contact attributes: $key"
+                    }
+                    customer.attr(key, attrVal.toInt())
+                }
             }
         }
         return customer
@@ -81,16 +84,25 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             }
         }
 
-        val builder =
-            UserCom.Builder(application, config.apiKey, config.integrationsApiKey, config.domain)
-        builder.setOnSdkInitializedListener(initHandler)
-        config.trackAllActivities?.let { builder.trackAllActivities(it) }
-        config.openLinksInChromeCustomTabs?.let { builder.openLinksInChromeCustomTabs(it) }
-        config.defaultCustomer?.let { builder.setDefaultCustomer(buildCustomer(it)) }
-
-        UserCom.Builder(application, config.apiKey, config.integrationsApiKey, config.domain)
-            .setOnSdkInitializedListener(initHandler)
-            .build()
+        // Android SDK expects a URL; iOS SDK expects a host. Accept either form from JS.
+        val domain = config.domain.trim().trimEnd('/')
+        val baseUrl = if (domain.startsWith("https://") || domain.startsWith("http://")) {
+            "$domain/"
+        } else {
+            "https://$domain/"
+        }
+        try {
+            val builder =
+                UserCom.Builder(application, config.apiKey, config.integrationsApiKey, baseUrl)
+            builder.setOnSdkInitializedListener(initHandler)
+            config.trackAllActivities?.let { builder.trackAllActivities(it) }
+            config.openLinksInChromeCustomTabs?.let { builder.openLinksInChromeCustomTabs(it) }
+            config.defaultCustomer?.let { builder.setDefaultCustomer(buildCustomer(it)) }
+            builder.build()
+        } catch (error: Throwable) {
+            handler.removeCallbacks(timeoutRunnable)
+            promise.reject(error)
+        }
 
         return promise
     }
@@ -105,8 +117,13 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             return promise
         }
 
-        UserCom.getInstance()
-            .register(buildCustomer(userData), object : CustomerUpdateCallback {
+        val customer = try {
+            buildCustomer(userData)
+        } catch (error: Throwable) {
+            return Promise.rejected(error)
+        }
+
+        instance.register(customer, object : CustomerUpdateCallback {
                 override fun onSuccess(p0: RegisterResponse) {
                     promise.resolve(UserComModuleRegisterUserResponse.create(p0.key))
                 }
@@ -163,11 +180,6 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         return Promise.resolved()
     }
 
-    private fun isPredefinedEvent(): Boolean {
-        // TODO: Unsupported yet
-        return false
-    }
-
     override fun sendCustomEvent(
         eventName: String,
         data: AnyMap
@@ -178,11 +190,7 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
         }
 
-        if (isPredefinedEvent()) {
-            return Promise.rejected(Throwable("Predefined events are not supported yet"))
-        }
-
-        instance.sendEvent(GenericUserComEvent(data.toHashMap()))
+        instance.sendEvent(eventName, data.toHashMap())
         return Promise.resolved()
     }
 
@@ -195,12 +203,5 @@ class HybridUserComModule : HybridUserComModuleSpec() {
 
         instance.trackScreen(screenName)
         return Promise.resolved()
-    }
-}
-
-@Event(name = "generic")
-class GenericUserComEvent(private val metadata: Map<String, Any?>) : UserComEvent {
-    override fun toFlat(): Map<String, Any?> {
-        return metadata
     }
 }

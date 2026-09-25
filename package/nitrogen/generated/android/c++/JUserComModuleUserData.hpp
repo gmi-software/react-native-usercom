@@ -43,6 +43,8 @@ namespace margelo::nitro::usercom {
       jni::local_ref<jni::JString> firstName = this->getFieldValue(fieldFirstName);
       static const auto fieldLastName = clazz->getField<jni::JString>("lastName");
       jni::local_ref<jni::JString> lastName = this->getFieldValue(fieldLastName);
+      static const auto fieldPhoneNumber = clazz->getField<jni::JString>("phoneNumber");
+      jni::local_ref<jni::JString> phoneNumber = this->getFieldValue(fieldPhoneNumber);
       static const auto fieldAttributes = clazz->getField<jni::JMap<jni::JString, JUserComModuleAttributeValue>>("attributes");
       jni::local_ref<jni::JMap<jni::JString, JUserComModuleAttributeValue>> attributes = this->getFieldValue(fieldAttributes);
       return UserComModuleUserData(
@@ -50,6 +52,7 @@ namespace margelo::nitro::usercom {
         email != nullptr ? std::make_optional(email->toStdString()) : std::nullopt,
         firstName != nullptr ? std::make_optional(firstName->toStdString()) : std::nullopt,
         lastName != nullptr ? std::make_optional(lastName->toStdString()) : std::nullopt,
+        phoneNumber != nullptr ? std::make_optional(phoneNumber->toStdString()) : std::nullopt,
         attributes != nullptr ? std::make_optional([&]() {
           std::unordered_map<std::string, std::variant<bool, std::string, double>> __map;
           __map.reserve(attributes->size());
@@ -67,7 +70,7 @@ namespace margelo::nitro::usercom {
      */
     [[maybe_unused]]
     static jni::local_ref<JUserComModuleUserData::javaobject> fromCpp(const UserComModuleUserData& value) {
-      using JSignature = JUserComModuleUserData(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JMap<jni::JString, JUserComModuleAttributeValue>>);
+      using JSignature = JUserComModuleUserData(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JMap<jni::JString, JUserComModuleAttributeValue>>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -76,6 +79,7 @@ namespace margelo::nitro::usercom {
         value.email.has_value() ? jni::make_jstring(value.email.value()) : nullptr,
         value.firstName.has_value() ? jni::make_jstring(value.firstName.value()) : nullptr,
         value.lastName.has_value() ? jni::make_jstring(value.lastName.value()) : nullptr,
+        value.phoneNumber.has_value() ? jni::make_jstring(value.phoneNumber.value()) : nullptr,
         value.attributes.has_value() ? [&]() -> jni::local_ref<jni::JMap<jni::JString, JUserComModuleAttributeValue>> {
           auto __map = jni::JHashMap<jni::JString, JUserComModuleAttributeValue>::create(value.attributes.value().size());
           for (const auto& __entry : value.attributes.value()) {

@@ -41,11 +41,12 @@ namespace margelo::nitro::usercom {
     std::optional<std::string> email     SWIFT_PRIVATE;
     std::optional<std::string> firstName     SWIFT_PRIVATE;
     std::optional<std::string> lastName     SWIFT_PRIVATE;
+    std::optional<std::string> phoneNumber     SWIFT_PRIVATE;
     std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>> attributes     SWIFT_PRIVATE;
 
   public:
     UserComModuleUserData() = default;
-    explicit UserComModuleUserData(std::string id, std::optional<std::string> email, std::optional<std::string> firstName, std::optional<std::string> lastName, std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>> attributes): id(id), email(email), firstName(firstName), lastName(lastName), attributes(attributes) {}
+    explicit UserComModuleUserData(std::string id, std::optional<std::string> email, std::optional<std::string> firstName, std::optional<std::string> lastName, std::optional<std::string> phoneNumber, std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>> attributes): id(id), email(email), firstName(firstName), lastName(lastName), phoneNumber(phoneNumber), attributes(attributes) {}
   };
 
 } // namespace margelo::nitro::usercom
@@ -62,6 +63,7 @@ namespace margelo::nitro {
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, "email")),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, "firstName")),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, "lastName")),
+        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, "phoneNumber")),
         JSIConverter<std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>>::fromJSI(runtime, obj.getProperty(runtime, "attributes"))
       );
     }
@@ -71,6 +73,7 @@ namespace margelo::nitro {
       obj.setProperty(runtime, "email", JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.email));
       obj.setProperty(runtime, "firstName", JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.firstName));
       obj.setProperty(runtime, "lastName", JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.lastName));
+      obj.setProperty(runtime, "phoneNumber", JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.phoneNumber));
       obj.setProperty(runtime, "attributes", JSIConverter<std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>>::toJSI(runtime, arg.attributes));
       return obj;
     }
@@ -86,6 +89,7 @@ namespace margelo::nitro {
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, "email"))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, "firstName"))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, "lastName"))) return false;
+      if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, "phoneNumber"))) return false;
       if (!JSIConverter<std::optional<std::unordered_map<std::string, std::variant<bool, std::string, double>>>>::canConvert(runtime, obj.getProperty(runtime, "attributes"))) return false;
       return true;
     }

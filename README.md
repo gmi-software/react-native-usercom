@@ -2,9 +2,9 @@
 
 <div align="center">
 
-A powerful React Native module for [User.com](https://user.com) SDK integration, enabling user tracking, engagement, and push notifications.
+A React Native bridge for [User.com](https://user.com) contact identity, event tracking, and optional push integration.
 
-[![npm version](https://img.shields.io/npm/v/react-native-usercom.svg)](https://www.npmjs.com/package/react-native-usercom)
+[![npm version](https://img.shields.io/npm/v/%40gmisoftware%2Freact-native-usercom.svg)](https://www.npmjs.com/package/@gmisoftware/react-native-usercom)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![Expo Compatible](https://img.shields.io/badge/Expo-Compatible-000020.svg)](https://expo.dev/)
@@ -19,15 +19,13 @@ Built with [Nitro Modules](https://nitro.margelo.com/) for high-performance nati
 
 ## Features
 
-- ✅ **User Management** - Complete user registration, login, and profile management
-- ✅ **Event Tracking** - Track custom events and product interactions
-- ✅ **Push Notifications** - Firebase-powered push notification system
-- ✅ **Type-Safe** - Full TypeScript support with comprehensive type definitions
-- ✅ **Cross-Platform** - Single API for iOS and Android platforms
-- ✅ **Modern Architecture** - Built with Nitro Modules for optimal performance
-- ✅ **Firebase Integration** - Seamless Firebase messaging integration
-- ✅ **Expo Compatible** - Config plugins for seamless Expo integration
-- ✅ **Production Ready** - Battle-tested user engagement platform
+- ✅ **Contact identity** - Register or update a User.com contact and reset it on logout; app authentication remains in the host app
+- ✅ **Event tracking** - Send custom events, product events, and screen views
+- ✅ **Android push receiver** - Bundled FCM service, registered by default for compatibility with 0.0.5; the host app must configure Firebase
+- ✅ **TypeScript API** - Typed methods and user data
+- ✅ **iOS and Android** - One JavaScript API backed by native User.com SDKs
+- ✅ **Nitro Modules** - Native bridge built with Nitro Modules
+- ✅ **Expo config plugin** - Adds iOS UserSDK setup and controls Android FCM service registration
 
 ---
 
@@ -48,28 +46,27 @@ bun add react-native-nitro-modules
 ### Step 2: Install React Native UserCom
 
 ```bash
-npm install react-native-usercom @react-native-firebase/app
+npm install @gmisoftware/react-native-usercom
 # or
-yarn add react-native-usercom @react-native-firebase/app
+yarn add @gmisoftware/react-native-usercom
 # or
-bun add react-native-usercom @react-native-firebase/app
+bun add @gmisoftware/react-native-usercom
 ```
 
 ### Prerequisites
 
-- React Native 0.76+
-- React Native Nitro Modules (required)
-- Expo SDK 52+ (if using Expo)
+- React Native with New Architecture and `react-native-nitro-modules` 0.33.1+
+- Expo development build (Expo Go does not include this native module)
 - iOS 15.1+
-- Android API 21+
+- Android API level supported by the host app and native User.com SDK
 
 ---
 
 ## Quick Start
 
-### Basic Example with Hook (Recommended)
+### Basic Example
 
-The easiest way to integrate User.com - one hook handles everything:
+Use the native module directly. This example initializes on mount. If your app requires consent, mount it only after consent or move `initializeUserCom()` behind your consent check:
 
 ```typescript
 import React, { useEffect } from 'react'
@@ -78,14 +75,14 @@ import {
   UserComModule,
   UserComModuleUserData, 
   UserComProductEventType 
-} from 'react-native-usercom'
+} from '@gmisoftware/react-native-usercom'
 
 function UserComExample() {
   // Initialize User.com SDK
   const initializeUserCom = async () => {
     try {
       await UserComModule.initialize({
-        apiKey: 'your-api-key',
+        apiKey: 'your-mobile-sdk-key',
         integrationsApiKey: 'your-integrations-api-key',
         domain: 'your-domain.user.com',
         trackAllActivities: true,
@@ -124,9 +121,9 @@ function UserComExample() {
     try {
       await UserComModule.sendCustomEvent('app_opened', {
         source: 'mobile_app',
-        timestamp: Date.now()
+        visit_count: 1
       })
-      console.log('Event sent successfully')
+      console.log('Event handed to the native SDK')
     } catch (error) {
       console.error('Failed to send event:', error)
     }
@@ -138,9 +135,9 @@ function UserComExample() {
       await UserComModule.sendProductEvent(
         'product123',
         UserComProductEventType.View,
-        { category: 'electronics', price: 299.99 }
+        { category: 'electronics', quantity: 1 }
       )
-      console.log('Product event sent successfully')
+      console.log('Product event handed to the native SDK')
     } catch (error) {
       console.error('Failed to send product event:', error)
     }
@@ -150,7 +147,7 @@ function UserComExample() {
   const sendScreenEvent = async () => {
     try {
       await UserComModule.sendScreenEvent('ProductDetailsScreen')
-      console.log('Screen event sent successfully')
+      console.log('Screen event handed to the native SDK')
     } catch (error) {
       console.error('Failed to send screen event:', error)
     }
@@ -196,13 +193,13 @@ export default UserComExample
 
 ### Using the Custom Hook
 
-For a more structured approach, use the provided hook:
+The repository includes an optional example hook at `example/hooks/useUserComHandler.ts`. It is not part of the published package API:
 
 ```typescript
 import React, { useEffect } from 'react'
 import { View, Button, Alert } from 'react-native'
 import { useUserComHandler } from './hooks/useUserComHandler'
-import { UserComProductEventType } from 'react-native-usercom'
+import { UserComProductEventType } from '@gmisoftware/react-native-usercom'
 
 function UserComWithHook() {
   const { initialize, registerUser, sendCustomEvent, sendProductEvent, logout } = useUserComHandler()
@@ -245,7 +242,7 @@ function UserComWithHook() {
 
 ## Firebase Configuration
 
-User.com SDK requires Firebase for push notifications. You need to configure Firebase in your project:
+The package does not require `@react-native-firebase/messaging` for event tracking. Configure Firebase Cloud Messaging in the host app if it needs User.com push notifications.
 
 ### 1. Create a Firebase project
 
@@ -260,38 +257,24 @@ Download the configuration files from Firebase Console:
 
 ## Platform Setup
 
+React Native Firebase is not a package peer dependency. The native User.com SDKs may bring their own Firebase dependencies; keep the iOS framework configuration shown below. To use FCM, install and configure Firebase in the host application.
+
 ### Expo Setup
 
 Add the plugins to your `app.json`:
 
-**Please note**\
-*Regarding Expo 54*\
-[Expo Issue `#39607`](https://github.com/expo/expo/issues/39607#issuecomment-3337284928) \
-`buildReactNativeFromSource` is required for Expo 54 (this is a workaround and will give you longer build-times (no longer than in the previous Expo SDKs though)\
-`"forceStaticLinking": ["RNFBApp"]` might be sufficient but was not tested
-
-
 ```json
 {
   "expo": {
-    "ios": {
-      "googleServicesFile": "./GoogleService-Info.plist"
-    },
-    "android": {
-      "googleServicesFile": "./google-services.json"
-    },
     "plugins": [
-      "@react-native-firebase/app",
       [
         "expo-build-properties",
         {
-          "ios": {
-            "useFrameworks": "static",
-            "buildReactNativeFromSource": true // Regarding Expo 54 (read note above)
-          }
+          "ios": { "useFrameworks": "static", "deploymentTarget": "15.1" },
+          "android": { "extraMavenRepos": ["https://android-sdk.user.com"] }
         }
       ],
-      "react-native-usercom"
+      "@gmisoftware/react-native-usercom"
     ]
   }
 }
@@ -299,38 +282,48 @@ Add the plugins to your `app.json`:
 
 Note (Android / Expo): if you're using Expo with `prebuild`, you must ensure the User.com Maven repository is present in the generated Android Gradle files. The recommended approach is to inject the repository using `expo-build-properties` (configure it in `app.json` / `app.config.js`) so it is added automatically during `prebuild`. If you don't use `expo-build-properties`, add the required `maven { url 'https://android-sdk.user.com' }` manually to the generated `android/build.gradle` after running `npx expo prebuild`.
 
-#### Plugin Options
+Expo SDK 54 projects that hit the [upstream native build issue](https://github.com/expo/expo/issues/39607) may still need `buildReactNativeFromSource: true` in the iOS `expo-build-properties` options. Enable this workaround only when affected; it increases build time.
 
-The `react-native-usercom` plugin accepts configuration options:
+#### Plugin options
+
+Add the options to the plugin entry inside `expo.plugins`:
 
 ```json
 {
-  "plugins": [
-    [
-      "react-native-usercom",
-      {
-        "androidNotificationChannelName": "Notifications"
-      }
+  "expo": {
+    "plugins": [
+      [
+        "@gmisoftware/react-native-usercom",
+        {
+          "androidNotificationChannelName": "Notifications",
+          "androidRegisterMessagingService": false
+        }
+      ]
     ]
-  ]
+  }
 }
 ```
 
-| Option                           | Type     | Default           | Description                                      |
-| -------------------------------- | -------- | ----------------- | ------------------------------------------------ |
-| `androidNotificationChannelName` | `string` | `"Notifications"` | Custom name for the Android notification channel |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `androidNotificationChannelName` | `string` | unset | Adds `user_com_channel_name` to Android strings. |
+| `androidRegisterMessagingService` | `boolean` | `true` | Adds Firebase Messaging to the Android app and registers the package FCM service, as in 0.0.5. Set `false` when another FCM service handles messages or the app only needs event tracking. |
 
-The plugin will automatically register the static service `com.margelo.nitro.usercom.UserComMessagingService` in your AndroidManifest.xml. You do not need to provide a class name option.
+The package's Android module declares `com.user:android-sdk:1.2.14`; do not add it a second time to the app. The iOS plugin pins `UserSDK` to tag `1.1.1`. Static frameworks are required for this iOS integration. If your app uses React Native Firebase, configure its own Expo plugin according to its documentation.
 
-> **⚠️ Important (iOS):** The `expo-build-properties` plugin with `"useFrameworks": "static"` is **required** for iOS. The User.com SDK (UserSDK) depends on Firebase, which requires static frameworks to work correctly with CocoaPods.
-
-> **⚠️ Important:** The `@react-native-firebase/app` plugin must be added **before** `expo-build-properties` in the plugins array.
+Pass the User.com workspace host (such as `your-domain.user.com`) or its `https://` URL to `initialize`. The bridge normalizes this for the platform: the Android SDK receives a full URL ending in `/` and the iOS SDK receives a host.
 
 Then run:
 
 ```bash
 npx expo prebuild --clean
 ```
+
+### Upgrading from 0.0.5
+
+Version 0.0.6 keeps Android push registration enabled by default for existing applications. Set `androidRegisterMessagingService: false` and rebuild when another Firebase messaging service handles messages or the app only needs event tracking. Apps with another Firebase messaging service must forward User.com messages from that service as described below. Event tracking does not require React Native Firebase.
+
+On Android, `registerUser({ attributes })` accepts integer, string, and boolean values. Fractional numbers now reject the registration call instead of being silently truncated to integers. The native Android User.com SDK documents only integer numeric event attributes; verify fractional event values on a User.com timeline before relying on them for cross-platform segments.
 
 ### Bare React Native
 
@@ -339,7 +332,7 @@ For bare React Native projects, ensure your `Podfile` includes:
 ```ruby
 platform :ios, '15.1'
 use_frameworks! :linkage => :static
-pod 'UserSDK', :git => 'https://github.com/UserEngage/iOS-SDK'
+pod 'UserSDK', :git => 'https://github.com/UserEngage/iOS-SDK.git', :tag => '1.1.1'
 ```
 
 To customize the Android notification channel name, add to your `android/app/src/main/res/values/strings.xml`:
@@ -361,47 +354,23 @@ allprojects {
 
 This repository is required so Gradle can resolve User.com artifacts (e.g. `com.user:android-sdk`).
 
-And in `android/app/build.gradle`:
-
-```gradle
-dependencies {
-  implementation 'com.user:android-sdk:1.2.8'
-}
-```
+The package's Android library already declares `com.user:android-sdk:1.2.14`. Do not duplicate it in the app unless the app's own native code calls User.com directly.
 
 ---
 
 ## Documentation
 
-### Android: Integrating with push notifications (UserComMessagingService)
+### Android: Firebase push notifications
 
-To handle User.com notifications alongside React Native Firebase:
+The package includes `UserComMessagingService` and registers it by default for compatibility with 0.0.5. Firebase Messaging is optional for analytics-only applications: set `androidRegisterMessagingService: false` to omit it. If this service will be the app's sole FCM receiver:
 
-1. Ensure you have `@react-native-firebase/messaging` installed in your app (see example `package.json`).
+1. Configure Firebase in the host app, including `google-services.json`. Expo apps can use `@react-native-firebase/app` for this setup.
+2. Keep `androidRegisterMessagingService` enabled (the default) in the Expo plugin options. The plugin adds the Android Firebase Messaging runtime dependency and registers `com.margelo.nitro.usercom.UserComMessagingService`. In a bare app, add the runtime dependency yourself and register the same class with the `com.google.firebase.MESSAGING_EVENT` intent filter.
+3. Test a User.com push on a device. The packaged service processes User.com messages only; apps needing their own message routing should use their existing FCM service instead.
 
-2. For **Expo projects** (with prebuild): The plugin automatically registers the `UserComMessagingService` in your `AndroidManifest.xml`. However, you must copy the `UserComMessagingService.kt` file from the module to your app's Android source directory (e.g., `android/app/src/main/java/com/yourpackage/`) to ensure it is compiled into your APK.
+If the app already has a `FirebaseMessagingService`, including one installed by `@react-native-firebase/messaging`, **do not register a competing service**. Forward messages from the existing service using `UserCom.getInstance().onNotification(applicationContext, remoteMessage)` and handle a message as the app normally does if that call returns `false`. The app's native module must add a direct `com.user:android-sdk:1.2.14` dependency for this call. See the [User.com Android notification guide](https://apidocs.user.com/mobilesdk/android/receiving-a-notification.html). On iOS, configure push permission, capabilities and Firebase in the host application according to the [User.com iOS guide](https://apidocs.user.com/mobilesdk/ios/receiving-a-notification.html). The bridge does not request notification permission.
 
-   > **Note:** The service implementation is provided by the module. Simply copy `module/android/src/main/java/com/margelo/nitro/usercom/UserComMessagingService.kt` to your app's source directory.
-
-3. For **Bare React Native projects**: Manually add the service entry to your `AndroidManifest.xml` and ensure the `UserComMessagingService.kt` is in your app's source.
-
-   ```xml
-   <service
-     android:name=".UserComMessagingService"
-     android:exported="false">
-     <intent-filter>
-       <action android:name="com.google.firebase.MESSAGING_EVENT" />
-     </intent-filter>
-   </service>
-   ```
-
----
-
-## Android: Implementing UserComMessagingService
-
-The `UserComMessagingService.kt` extends `FirebaseMessagingService` to integrate User.com SDK with Firebase messaging.
-
-It forwards incoming notifications to the User.com SDK and then to React Native Firebase for JavaScript handling.
+The bundled Android messaging service can process a User.com message only after the SDK has been initialized. It currently drops messages received before `initialize()` runs, including some cold-start deliveries. Apps that need reliable Android push delivery must initialize the native SDK before FCM messages arrive or implement their own message handling. Choose the initialization point according to the host app's consent rules.
 
 ---
 
@@ -437,6 +406,7 @@ const result = await UserComModule.registerUser({
   email: 'user@example.com',
   firstName: 'John',
   lastName: 'Doe',
+  phoneNumber: '+15551234567',
   attributes: {
     plan: 'premium',
     signupDate: new Date().toISOString(),
@@ -463,7 +433,7 @@ Sends a product event to User.com.
 await UserComModule.sendProductEvent(
   'product123',
   UserComProductEventType.View,
-  { category: 'electronics', price: 299.99 }
+  { category: 'electronics', quantity: 1 }
 )
 ```
 
@@ -501,6 +471,7 @@ interface UserComModuleUserData {
   email?: string
   firstName?: string
   lastName?: string
+  phoneNumber?: string
   attributes?: Record<string, UserComModuleAttributeValue>
 }
 ```
@@ -545,7 +516,7 @@ enum UserComProductEventType {
 
 ### Hook: `useUserComHandler`
 
-A custom hook that provides a convenient interface for User.com operations.
+The repository example hook provides a convenient interface for User.com operations. Copy and adapt it if needed; it is not exported by the package.
 
 ```typescript
 import { useUserComHandler } from './hooks/useUserComHandler'
@@ -573,10 +544,10 @@ const {
 
 ## Requirements
 
-- React Native 0.76+
-- Expo SDK 52+ (for Expo projects)
+- React Native with New Architecture and `react-native-nitro-modules` 0.33.1+
+- Expo development build (Expo Go does not include this native module)
 - iOS 15.1+
-- Android API 21+
+- Android API level supported by the host app and native User.com SDK
 
 ---
 
@@ -595,7 +566,7 @@ If you encounter build errors related to `UserSDK` or `Gifu`, ensure:
 If you encounter missing dependency errors:
 
 1. Ensure the User.com maven repository is added to `android/build.gradle`
-2. Run `cd android && ./gradlew clean`
+2. Rebuild the native app after changing the Maven repository or plugin options
 
 ---
 

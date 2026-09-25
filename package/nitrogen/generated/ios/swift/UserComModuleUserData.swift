@@ -19,7 +19,7 @@ public extension UserComModuleUserData {
   /**
    * Create a new instance of `UserComModuleUserData`.
    */
-  init(id: String, email: String?, firstName: String?, lastName: String?, attributes: Dictionary<String, UserComModuleAttributeValue>?) {
+  init(id: String, email: String?, firstName: String?, lastName: String?, phoneNumber: String?, attributes: Dictionary<String, UserComModuleAttributeValue>?) {
     self.init(std.string(id), { () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = email {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
@@ -34,6 +34,12 @@ public extension UserComModuleUserData {
       }
     }(), { () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = lastName {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = phoneNumber {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
       } else {
         return .init()
@@ -72,7 +78,7 @@ public extension UserComModuleUserData {
       self.__id = std.string(newValue)
     }
   }
-  
+
   var email: String? {
     @inline(__always)
     get {
@@ -96,7 +102,7 @@ public extension UserComModuleUserData {
       }()
     }
   }
-  
+
   var firstName: String? {
     @inline(__always)
     get {
@@ -120,7 +126,7 @@ public extension UserComModuleUserData {
       }()
     }
   }
-  
+
   var lastName: String? {
     @inline(__always)
     get {
@@ -144,7 +150,31 @@ public extension UserComModuleUserData {
       }()
     }
   }
-  
+
+  var phoneNumber: String? {
+    @inline(__always)
+    get {
+      return { () -> String? in
+        if bridge.has_value_std__optional_std__string_(self.__phoneNumber) {
+          let __unwrapped = bridge.get_std__optional_std__string_(self.__phoneNumber)
+          return String(__unwrapped)
+        } else {
+          return nil
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__phoneNumber = { () -> bridge.std__optional_std__string_ in
+        if let __unwrappedValue = newValue {
+          return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+        } else {
+          return .init()
+        }
+      }()
+    }
+  }
+
   var attributes: Dictionary<String, UserComModuleAttributeValue>? {
     @inline(__always)
     get {
