@@ -307,7 +307,7 @@ Expo SDK 54 projects that hit the [upstream native build issue](https://github.c
 
 The package's Android module declares `com.user:android-sdk:1.2.14`; do not add it a second time to the app. The iOS plugin pins `UserSDK` to tag `1.1.1`. Static frameworks are required for this iOS integration. If your app uses React Native Firebase, configure its own Expo plugin according to its documentation.
 
-Pass the User.com workspace host (such as `your-domain.user.com`) or its `https://` URL to `initialize`. The bridge normalizes this for the platform: the Android SDK receives a full URL and the iOS SDK receives a host.
+Pass the User.com workspace host (such as `your-domain.user.com`) or its `https://` URL to `initialize`. The bridge normalizes this for the platform: the Android SDK receives a full URL ending in `/` and the iOS SDK receives a host.
 
 Then run:
 

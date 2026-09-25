@@ -87,9 +87,9 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         // Android SDK expects a URL; iOS SDK expects a host. Accept either form from JS.
         val domain = config.domain.trim().trimEnd('/')
         val baseUrl = if (domain.startsWith("https://") || domain.startsWith("http://")) {
-            domain
+            "$domain/"
         } else {
-            "https://$domain"
+            "https://$domain/"
         }
         val builder =
             UserCom.Builder(application, config.apiKey, config.integrationsApiKey, baseUrl)
