@@ -286,17 +286,21 @@ Expo SDK 54 projects that hit the [upstream native build issue](https://github.c
 
 #### Plugin options
 
+Add the options to the plugin entry inside `expo.plugins`:
+
 ```json
 {
-  "plugins": [
-    [
-      "@gmisoftware/react-native-usercom",
-      {
-        "androidNotificationChannelName": "Notifications",
-        "androidRegisterMessagingService": false
-      }
+  "expo": {
+    "plugins": [
+      [
+        "@gmisoftware/react-native-usercom",
+        {
+          "androidNotificationChannelName": "Notifications",
+          "androidRegisterMessagingService": false
+        }
+      ]
     ]
-  ]
+  }
 }
 ```
 
@@ -365,6 +369,8 @@ The package includes `UserComMessagingService` and registers it by default for c
 3. Test a User.com push on a device. The packaged service processes User.com messages only; apps needing their own message routing should use their existing FCM service instead.
 
 If the app already has a `FirebaseMessagingService`, including one installed by `@react-native-firebase/messaging`, **do not register a competing service**. Forward messages from the existing service using `UserCom.getInstance().onNotification(applicationContext, remoteMessage)` and handle a message as the app normally does if that call returns `false`. The app's native module must add a direct `com.user:android-sdk:1.2.14` dependency for this call. See the [User.com Android notification guide](https://apidocs.user.com/mobilesdk/android/receiving-a-notification.html). On iOS, configure push permission, capabilities and Firebase in the host application according to the [User.com iOS guide](https://apidocs.user.com/mobilesdk/ios/receiving-a-notification.html). The bridge does not request notification permission.
+
+The bundled Android messaging service can process a User.com message only after the SDK has been initialized. It currently drops messages received before `initialize()` runs, including some cold-start deliveries. Apps that need reliable Android push delivery must initialize the native SDK before FCM messages arrive or implement their own message handling. Choose the initialization point according to the host app's consent rules.
 
 ---
 

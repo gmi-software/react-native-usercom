@@ -19,13 +19,34 @@ class HybridUserComModule: HybridUserComModuleSpec {
         )
         
         let promise = Promise<Void>()
-        sdk.ping { success, error in
+        let stateLock = NSLock()
+        var settled = false
+        let settle: (Error?) -> Void = { error in
+            stateLock.lock()
+            guard !settled else {
+                stateLock.unlock()
+                return
+            }
+            settled = true
+            stateLock.unlock()
+
             if let error = error {
                 promise.reject(withError: error)
-            } else if !success {
-                promise.reject(withError: NSError(domain: "User.com ping failed", code: 1))
             } else {
                 promise.resolve()
+            }
+        }
+        let timeoutSeconds = max(0, (config.initTimeoutMs ?? 10000) / 1000)
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeoutSeconds) {
+            settle(NSError(domain: "User.com initialization timed out", code: 1))
+        }
+        sdk.ping { success, error in
+            if let error = error {
+                settle(error)
+            } else if !success {
+                settle(NSError(domain: "User.com ping failed", code: 1))
+            } else {
+                settle(nil)
             }
         }
         return promise

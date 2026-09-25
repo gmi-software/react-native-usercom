@@ -91,14 +91,13 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         } else {
             "https://$domain/"
         }
-        val builder =
-            UserCom.Builder(application, config.apiKey, config.integrationsApiKey, baseUrl)
-        builder.setOnSdkInitializedListener(initHandler)
-        config.trackAllActivities?.let { builder.trackAllActivities(it) }
-        config.openLinksInChromeCustomTabs?.let { builder.openLinksInChromeCustomTabs(it) }
-        config.defaultCustomer?.let { builder.setDefaultCustomer(buildCustomer(it)) }
-
         try {
+            val builder =
+                UserCom.Builder(application, config.apiKey, config.integrationsApiKey, baseUrl)
+            builder.setOnSdkInitializedListener(initHandler)
+            config.trackAllActivities?.let { builder.trackAllActivities(it) }
+            config.openLinksInChromeCustomTabs?.let { builder.openLinksInChromeCustomTabs(it) }
+            config.defaultCustomer?.let { builder.setDefaultCustomer(buildCustomer(it)) }
             builder.build()
         } catch (error: Throwable) {
             handler.removeCallbacks(timeoutRunnable)
