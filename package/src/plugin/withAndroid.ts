@@ -32,7 +32,9 @@ export const withAndroid: ConfigPlugin<UserComPluginOptions> = (
       const contents = modConfig.modResults.contents
       if (!contents.includes('com.google.firebase:firebase-messaging')) {
         if (!/dependencies\s*\{/.test(contents)) {
-          throw new Error('[UserCom] Android app/build.gradle has no dependencies block')
+          throw new Error(
+            '[UserCom] Android app/build.gradle has no dependencies block'
+          )
         }
         modConfig.modResults.contents = contents.replace(
           /dependencies\s*\{/,
@@ -42,29 +44,45 @@ export const withAndroid: ConfigPlugin<UserComPluginOptions> = (
       }
       return modConfig
     })
-
-    config = withAndroidManifest(config, (modConfig) => {
-      const application = AndroidConfig.Manifest.getMainApplicationOrThrow(
-        modConfig.modResults
-      )
-      const services = application.service || []
-      if (!services.some((service) => service.$['android:name'] === SERVICE_NAME)) {
-        services.push({
-          $: {
-            'android:name': SERVICE_NAME,
-            'android:exported': 'false',
-          },
-          'intent-filter': [
-            {
-              action: [{ $: { 'android:name': 'com.google.firebase.MESSAGING_EVENT' } }],
-            },
-          ],
-        })
-      }
-      application.service = services
-      return modConfig
-    })
   }
+
+  config = withAndroidManifest(config, (modConfig) => {
+    const application = AndroidConfig.Manifest.getMainApplicationOrThrow(
+      modConfig.modResults
+    )
+    const services = application.service || []
+
+    if (options.androidRegisterMessagingService === false) {
+      if (
+        services.some((service) => service.$['android:name'] === SERVICE_NAME)
+      ) {
+        application.service = services.filter(
+          (service) => service.$['android:name'] !== SERVICE_NAME
+        )
+      }
+      return modConfig
+    }
+
+    if (
+      !services.some((service) => service.$['android:name'] === SERVICE_NAME)
+    ) {
+      services.push({
+        '$': {
+          'android:name': SERVICE_NAME,
+          'android:exported': 'false',
+        },
+        'intent-filter': [
+          {
+            action: [
+              { $: { 'android:name': 'com.google.firebase.MESSAGING_EVENT' } },
+            ],
+          },
+        ],
+      })
+    }
+    application.service = services
+    return modConfig
+  })
 
   return config
 }
