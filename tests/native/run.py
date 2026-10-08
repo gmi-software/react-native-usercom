@@ -26,16 +26,21 @@ with tempfile.TemporaryDirectory(prefix="usercom-native-tests-") as directory:
         subprocess.run([str(binary)], check=True)
     if args.platform in ("android", "all"):
         cache = Path(os.environ.get("GRADLE_USER_HOME", str(Path.home() / ".gradle"))) / "caches/modules-2/files-2.1"
-        def jar(group, artifact, version=None):
+        def binary_jars(group, artifact, version=None):
             folder = cache / group / artifact
             matches = list((folder / version).glob("*/*.jar")) if version else list(folder.glob("*/*/*.jar"))
+            # Maven classifiers (sources, javadoc, tests) are not runtime libraries.
+            return [path for path in matches if path.name == f"{artifact}-{path.parent.parent.name}.jar"]
+
+        def jar(group, artifact, version=None):
+            matches = binary_jars(group, artifact, version)
             if not matches:
                 raise SystemExit(f"Missing cached {group}:{artifact}. Build the Android example first to populate Gradle dependencies.")
-            return str(max(matches, key=lambda path: tuple(int(n) for n in re.findall(r"\d+", path.parent.parent.name))))
-        compiler_versions = list((cache / "org.jetbrains.kotlin/kotlin-compiler-embeddable").glob("*"))
-        if not compiler_versions:
+            return str(max(matches, key=lambda path: (tuple(int(n) for n in re.findall(r"\d+", path.parent.parent.name)), str(path))))
+        compiler_jars = binary_jars("org.jetbrains.kotlin", "kotlin-compiler-embeddable")
+        if not compiler_jars:
             raise SystemExit("Build the Android example first to cache the Kotlin compiler.")
-        compiler_version = max(compiler_versions, key=lambda path: tuple(int(n) for n in re.findall(r"\d+", path.name))).name
+        compiler_version = max(compiler_jars, key=lambda path: tuple(int(n) for n in re.findall(r"\d+", path.parent.parent.name))).parent.parent.name
         java_root = os.environ.get("JAVA_HOME")
         java = str(Path(java_root) / "bin/java") if java_root else shutil.which("java")
         compiler = [jar("org.jetbrains.kotlin", "kotlin-compiler-embeddable", compiler_version),
@@ -45,9 +50,9 @@ with tempfile.TemporaryDirectory(prefix="usercom-native-tests-") as directory:
                     jar("org.jetbrains.kotlin", "kotlin-daemon-embeddable", compiler_version),
                     jar("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm"),
                     jar("org.jetbrains", "annotations")]
-        trove = list((cache / "org.jetbrains.intellij.deps/trove4j").glob("*/*/*.jar"))
+        trove = binary_jars("org.jetbrains.intellij.deps", "trove4j")
         if trove:
-            compiler.append(str(trove[-1]))
+            compiler.append(jar("org.jetbrains.intellij.deps", "trove4j"))
         stdlib = jar("org.jetbrains.kotlin", "kotlin-stdlib", compiler_version)
         json = jar("org.json", "json")
         annotations = jar("org.jetbrains", "annotations")
