@@ -243,7 +243,7 @@ function UserComWithHook() {
 
 ## Firebase Configuration
 
-The package does not require `@react-native-firebase/messaging` for event tracking. Configure Firebase Cloud Messaging in the host app if it needs User.com push notifications.
+The package does not require `@react-native-firebase/messaging` for event tracking. On Android, User.com SDK 1.2.14 itself includes native Firebase dependencies and retrieves an FCM token during contact registration, so valid native Firebase configuration is still required for that registration path. The iOS SDK has no Firebase dependency for analytics. Configure the host's messaging stack if it needs User.com push notifications.
 
 ### 1. Create a Firebase project
 
@@ -407,16 +407,28 @@ On iOS, a resolved `handleNotification` promise confirms forwarding to the nativ
 
 For Android SDK-generated notifications, call `consumeInitialNotification()` after identity/navigation are ready and forward that data as an opened push. Warm launcher intents also invoke the link handler. RNFB handles iOS local taps when the original FCM message ID is forwarded; other push stacks must forward their notification-center responses. The iOS bridge preserves the host's notification delegate when showing its own local foreground banners.
 
-On token rotation, call `registerPushToken` again. On opt-out or logout:
+On token rotation, call `registerPushToken` again. In a host using React Native Firebase Messaging, opt-out cleanup can use:
 
 ```ts
+import { getMessaging, setAutoInitEnabled, deleteToken } from '@react-native-firebase/messaging'
+
 UserComModule.setMessagingEnabled(false, false) // immediate display gate
-await UserComModule.unregisterPushToken()
-// Also disable auto-init and invalidate the token in your Firebase stack.
-// Persist the opt-out so cold/background launches cannot enable messaging again.
+const results = await Promise.allSettled([
+  Promise.resolve().then(() => UserComModule.unregisterPushToken()),
+  (async () => {
+    try { await setAutoInitEnabled(getMessaging(), false) }
+    finally { await deleteToken(getMessaging()) }
+  })(),
+])
+const failure = results.find(result => result.status === 'rejected')
+if (failure?.status === 'rejected') throw failure.reason
 ```
 
-`registerPushToken` and `unregisterPushToken` use the documented Mobile SDK `ping` and `delete-fcm-token` endpoints and reject non-success HTTP responses. Failed removals are persisted and retried by the next bind/unbind operation, including after process restart. Tokens are associated with the last successfully registered contact; no privileged public REST API key is needed.
+For logout, use `UserComModule.logout()` instead of `unregisterPushToken()` in that example to reset the SDK and clear the bridge's contact identity as well. With other Firebase stacks, implement equivalent cleanup: attempt Firebase invalidation even when User.com removal fails. Persist the opt-out so cold/background launches cannot enable messaging again.
+
+Logout also clears queued links and the JS link callback; install the handler again after identifying the next contact. The host must retain its native notification-center delegate, as required by Apple's weak `delegate` property; the bridge forwards to it without taking over its lifetime.
+
+`registerPushToken` and `unregisterPushToken` use the documented Mobile SDK `ping` and `delete-fcm-token` endpoints. A successful new binding is not rejected by an older removal failure. Pending removals retain their original contact/workspace and are retried; DELETE 404/410 counts as already removed, while authentication, throttling and network failures remain pending. Successful ping transfers the token to the current contact, so older removal records for that same workspace/token are discarded to avoid deleting the new binding. Logout clears the active bridge identity immediately while preserving old removal records. No privileged public REST API key is needed.
 
 **Limits to test before release:** Android SDK 1.2.14 has no logout-completed callback: `logout()` waits for stored-token removal and dispatches the SDK reset, but cannot acknowledge the later anonymous registration. Verify logout/account changes on devices. In analytics-only mode Android SDK still obtains a token during contact registration: explicitly unbind it and invalidate it in Firebase. OS-displayed alert payloads cannot be canceled by a JS consent check that runs afterward. Rich iOS push images need a Notification Service Extension and are outside this bridge's text-push setup.
 

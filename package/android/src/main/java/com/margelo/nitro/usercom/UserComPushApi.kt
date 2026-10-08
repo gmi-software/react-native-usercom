@@ -7,35 +7,70 @@ import java.net.URL
 import java.util.concurrent.Executors
 
 /** Mobile SDK endpoints, not the privileged public REST API. No Firebase dependency. */
-internal class UserComPushApi(context: Context) {
+internal class UserComPushApi(
+    context: Context,
+    private val connectionFactory: (URL) -> HttpURLConnection = { it.openConnection() as HttpURLConnection }
+) {
     private val storage = context.getSharedPreferences("nitro_usercom_messaging", Context.MODE_PRIVATE)
     private val executor = Executors.newSingleThreadExecutor()
+    private val stateLock = Any()
     private var baseUrl = ""
     private var apiKey = ""
     private var userKey = ""
     private var userId = ""
-    fun currentUserId(): String = userId
+    private var generation = 0L
+    private var identityGeneration = 0L
+    private data class Snapshot(val binding: JSONObject, val generation: Long, val identityGeneration: Long)
+    private class HttpError(val status: Int) : IllegalStateException("User.com messaging HTTP $status")
+
+    fun currentUserId(): String = synchronized(stateLock) { userId }
+
+    fun invalidatePendingBindings() { synchronized(stateLock) { generation++ } }
+
+    fun clearIdentity() {
+        synchronized(stateLock) { generation++; identityGeneration++; userId = ""; userKey = "" }
+    }
+
+    private fun checkIdentity(snapshot: Snapshot, bindingOperation: Boolean = true) {
+        check(synchronized(stateLock) {
+            identityGeneration == snapshot.identityGeneration && userKey.isNotEmpty() &&
+                (!bindingOperation || generation == snapshot.generation)
+        }) {
+            "User.com contact changed before token operation"
+        }
+    }
 
     fun configure(config: UserComModuleConfig) {
         val host = config.domain.trim().removePrefix("https://").removePrefix("http://").trimEnd('/')
         require(host.endsWith(".user.com") && !host.contains('/') && !host.contains('@')) {
             "Expected a User.com workspace host"
         }
-        baseUrl = "https://$host/"
-        apiKey = config.apiKey
+        synchronized(stateLock) {
+            val url = "https://$host/"
+            if (baseUrl != url || apiKey != config.apiKey) {
+                generation++; identityGeneration++; userId = ""; userKey = ""
+            }
+            baseUrl = url
+            apiKey = config.apiKey
+        }
     }
 
     fun identify(id: String, key: String) {
-        userId = id
-        userKey = key
+        synchronized(stateLock) {
+            if (userId != id || userKey != key) { generation++; identityGeneration++ }
+            userId = id
+            userKey = key
+        }
     }
 
     fun rememberToken(token: String, complete: (Throwable?) -> Unit) {
-        val binding = snapshot(token)
+        val snapshot = snapshot(token)
         executor.execute {
             try {
-                require(binding.getString("userKey").isNotEmpty()) { "Register a contact before binding a token" }
-                saveBinding(binding)
+                // The upstream SDK may already have bound this token even after
+                // messaging opt-out. Remember it for cleanup, without re-enabling it.
+                checkIdentity(snapshot, bindingOperation = false)
+                saveBinding(snapshot.binding)
                 complete(null)
             } catch (error: Throwable) { complete(error) }
         }
@@ -54,23 +89,41 @@ internal class UserComPushApi(context: Context) {
         storage.edit().putString("binding", binding.toString()).commit()
     }
 
-    private fun snapshot(token: String): JSONObject = JSONObject()
-        .put("baseUrl", baseUrl).put("apiKey", apiKey)
-        .put("userKey", userKey).put("userId", userId).put("token", token)
+    private fun snapshot(token: String): Snapshot = synchronized(stateLock) {
+        Snapshot(JSONObject().put("baseUrl", baseUrl).put("apiKey", apiKey)
+            .put("userKey", userKey).put("userId", userId).put("token", token), generation, identityGeneration)
+    }
 
     fun bind(token: String, complete: (Throwable?) -> Unit) {
-        val binding = snapshot(token)
+        val snapshot = snapshot(token)
+        val binding = snapshot.binding
         executor.execute {
             try {
-                require(binding.getString("userKey").isNotEmpty()) { "Register a contact first" }
+                checkIdentity(snapshot)
                 saveBinding(binding)
-                flushRemovals()
+                checkIdentity(snapshot)
                 request(binding, "POST", "api/sdk/v1/ping/", JSONObject()
                     .put("customer", JSONObject().put("user_id", binding.getString("userId")))
                     .put("device", JSONObject().put("os_type", "Android").put("fcm_key", token)))
+                discardTransferredRemovals(binding)
+                checkIdentity(snapshot)
                 complete(null)
+                runCatching { flushRemovals() }.onFailure {
+                    android.util.Log.w("UserCom", "Previous token removal remains pending", it)
+                }
             } catch (error: Throwable) { complete(error) }
         }
+    }
+
+    private fun discardTransferredRemovals(active: JSONObject) {
+        val pending = JSONObject(storage.getString("removals", "{}")!!)
+        for (key in pending.keys().asSequence().toList()) {
+            val old = pending.getJSONObject(key)
+            if (old.getString("baseUrl") == active.getString("baseUrl") && old.getString("token") == active.getString("token")) {
+                pending.remove(key)
+            }
+        }
+        storage.edit().putString("removals", pending.toString()).commit()
     }
 
     fun unbind(complete: (Throwable?) -> Unit) {
@@ -91,28 +144,36 @@ internal class UserComPushApi(context: Context) {
 
     private fun flushRemovals() {
         val pending = JSONObject(storage.getString("removals", "{}")!!)
+        var firstError: Throwable? = null
         for (key in pending.keys().asSequence().toList()) {
             val binding = pending.getJSONObject(key)
-            request(binding, "DELETE", "api/sdk/v1/delete-fcm-token/",
-                JSONObject().put("fcm_key", binding.getString("token")))
-            pending.remove(key)
+            try {
+                request(binding, "DELETE", "api/sdk/v1/delete-fcm-token/",
+                    JSONObject().put("fcm_key", binding.getString("token")))
+                pending.remove(key)
+            } catch (error: Throwable) {
+                if (error is HttpError && error.status in listOf(404, 410)) pending.remove(key)
+                else if (firstError == null) firstError = error
+            }
             storage.edit().putString("removals", pending.toString()).commit()
         }
+        firstError?.let { throw it }
     }
 
     fun clicked(id: String, complete: (Throwable?) -> Unit) {
-        val binding = snapshot("")
+        val snapshot = snapshot("")
         executor.execute {
             try {
                 require(id.matches(Regex("[A-Za-z0-9_-]+"))) { "Invalid notification delivery ID" }
-                request(binding, "POST", "api/sdk/v1/push-notification/$id/clicked/", JSONObject())
+                checkIdentity(snapshot)
+                request(snapshot.binding, "POST", "api/sdk/v1/push-notification/$id/clicked/", JSONObject())
                 complete(null)
             } catch (error: Throwable) { complete(error) }
         }
     }
 
     private fun request(binding: JSONObject, method: String, path: String, body: JSONObject) {
-        val connection = URL(binding.getString("baseUrl") + path).openConnection() as HttpURLConnection
+        val connection = connectionFactory(URL(binding.getString("baseUrl") + path))
         try {
             connection.requestMethod = method
             connection.connectTimeout = 10000
@@ -124,7 +185,8 @@ internal class UserComPushApi(context: Context) {
             connection.setRequestProperty("Content-Type", "application/json")
             connection.doOutput = true
             connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-            check(connection.responseCode in 200..299) { "User.com messaging HTTP ${connection.responseCode}" }
+            val status = connection.responseCode
+            if (status !in 200..299) throw HttpError(status)
         } finally { connection.disconnect() }
     }
 }

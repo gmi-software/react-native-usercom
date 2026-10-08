@@ -1,0 +1,152 @@
+package com.margelo.nitro.usercom
+
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.system.exitProcess
+
+class Promise<T> {
+    private val done = CountDownLatch(1)
+    var value: T? = null
+    var error: Throwable? = null
+    fun resolve(result: T) { value = result; done.countDown() }
+    fun reject(reason: Throwable) { error = reason; done.countDown() }
+    fun await(): Promise<T> { check(done.await(10, TimeUnit.SECONDS)) { "Promise hung" }; return this }
+    companion object { fun <T> rejected(error: Throwable) = Promise<T>().apply { reject(error) } }
+}
+fun Promise<Unit>.resolve() = resolve(Unit)
+data class UserComModuleUserData(val id: String)
+data class UserComModuleRegisterUserResponse(val key: String) {
+    companion object { fun create(key: String) = UserComModuleRegisterUserResponse(key) }
+}
+class Customer
+class RegisterResponse(val key: String)
+interface CustomerUpdateCallback {
+    fun onSuccess(p0: RegisterResponse)
+    fun onFailure(p0: Throwable)
+}
+class TokenTask(var failure: Throwable? = null, var deferred: Boolean = false) {
+    var success: ((String) -> Unit)? = null
+    fun addOnSuccessListener(action: (String) -> Unit): TokenTask {
+        success = action
+        if (failure == null && !deferred) action("automatic-token")
+        return this
+    }
+    fun addOnFailureListener(action: (Throwable) -> Unit): TokenTask {
+        failure?.let(action); return this
+    }
+}
+object FirebaseMessaging {
+    var throwOnAccess = false
+    var token = TokenTask()
+    fun getInstance(): FirebaseMessaging {
+        check(!throwOnAccess) { "Firebase unavailable" }; return this
+    }
+}
+class UserCom {
+    var deferred = false
+    var throwOnRegister = false
+    var pending: CustomerUpdateCallback? = null
+    fun register(customer: Customer, callback: CustomerUpdateCallback) {
+        check(!throwOnRegister) { "SDK registration unavailable" }
+        pending = callback
+        if (!deferred) callback.onSuccess(RegisterResponse("registered-key"))
+    }
+    fun logout() {}
+    companion object { var currentInstance = UserCom(); fun getInstance() = currentInstance }
+}
+abstract class RegistrationSpec {
+    abstract fun registerUser(userData: UserComModuleUserData): Promise<UserComModuleRegisterUserResponse>
+    abstract fun logout(): Promise<Unit>
+}
+class Bridge(context: MemoryContext) : RegistrationSpec() {
+    internal val pushApi = UserComPushApi(context, Server()::connection)
+    private val registrationGeneration = AtomicLong()
+    private val messagingLock = Any()
+    private var linkHandler: ((String) -> Unit)? = null
+    private var pendingInAppLink: String? = null
+    private var activeInAppOwner: String? = null
+    private var pendingIntent: Any? = null
+    init { pushApi.configure(UserComModuleConfig("fixture.user.com", "fixture-sdk-key")) }
+    private fun buildCustomer(data: UserComModuleUserData) = Customer()
+    private fun setMessagingEnabled(push: Boolean, inApp: Boolean) {
+        if (!push && !inApp) pushApi.invalidatePendingBindings()
+    }
+// PRODUCTION_METHODS
+}
+fun fresh(): Pair<Bridge, MemoryContext> {
+    FirebaseMessaging.throwOnAccess = false; FirebaseMessaging.token = TokenTask()
+    UserCom.currentInstance = UserCom()
+    val context = MemoryContext()
+    return Bridge(context) to context
+}
+fun main() {
+    try {
+        var cases = 0
+        run {
+            val (bridge, context) = fresh()
+            val result = bridge.registerUser(UserComModuleUserData("account-a")).await()
+            check(result.error == null && result.value?.key == "registered-key")
+            check(context.prefs.getString("binding", null) != null)
+            check(bridge.logout().await().error == null)
+            cases++
+        }
+        run {
+            val (bridge, _) = fresh()
+            FirebaseMessaging.token = TokenTask(failure = IllegalStateException("Token unavailable"))
+            val result = bridge.registerUser(UserComModuleUserData("account-a")).await()
+            check(result.error == null && result.value?.key == "registered-key")
+            check(bridge.logout().await().error == null)
+            cases++
+        }
+        run {
+            val (bridge, _) = fresh()
+            FirebaseMessaging.throwOnAccess = true
+            val result = bridge.registerUser(UserComModuleUserData("account-a")).await()
+            check(result.error == null && result.value?.key == "registered-key")
+            check(bridge.logout().await().error == null)
+            cases++
+        }
+        run {
+            val (bridge, context) = fresh()
+            context.prefs.failReads = true
+            check(bridge.registerUser(UserComModuleUserData("account-a")).await().error?.message == "Storage unavailable")
+            context.prefs.failReads = false
+            bridge.logout().await()
+            cases++
+        }
+        run {
+            val (bridge, _) = fresh()
+            UserCom.currentInstance.throwOnRegister = true
+            check(bridge.registerUser(UserComModuleUserData("account-a")).await().error?.message == "SDK registration unavailable")
+            bridge.logout().await()
+            cases++
+        }
+        run {
+            val (bridge, _) = fresh()
+            UserCom.currentInstance.deferred = true
+            val pending = bridge.registerUser(UserComModuleUserData("account-a"))
+            check(bridge.logout().await().error == null)
+            UserCom.currentInstance.pending!!.onSuccess(RegisterResponse("old-key"))
+            check(pending.await().error != null && bridge.pushApi.currentUserId().isEmpty())
+            cases++
+        }
+        run {
+            val (bridge, context) = fresh()
+            val task = TokenTask(deferred = true)
+            FirebaseMessaging.token = task
+            val pending = bridge.registerUser(UserComModuleUserData("account-a"))
+            check(bridge.logout().await().error == null)
+            task.success!!("stale-token")
+            check(pending.await().error != null && bridge.pushApi.currentUserId().isEmpty())
+            check(context.prefs.getString("binding", null) == null)
+            cases++
+        }
+        println("Android registration bridge: $cases cases passed")
+        exitProcess(0)
+    } catch (error: Throwable) { error.printStackTrace(); exitProcess(1) }
+}

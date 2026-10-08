@@ -12,6 +12,8 @@ private final class UserComFallbackFontResolver: NSObject, FontResolving {
 
 class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelegate {
     private let pushApi = UserComPushApi()
+    private let messagingLock = NSLock()
+    private var registrationGeneration: UInt64 = 0
     private var pushEnabled = false
     private var inAppEnabled = false
     private var linkHandler: ((String) -> Void)?
@@ -19,20 +21,36 @@ class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelega
     private var activeInAppOwner: String?
     private let fontResolver = UserComFallbackFontResolver()
 
+    private func withMessagingState<T>(_ action: () -> T) -> T {
+        messagingLock.lock()
+        defer { messagingLock.unlock() }
+        return action()
+    }
+
     func setMessagingEnabled(pushEnabled: Bool, inAppEnabled: Bool) throws {
-        self.pushEnabled = pushEnabled
-        self.inAppEnabled = inAppEnabled
-        if !inAppEnabled { pendingInAppLink = nil; activeInAppOwner = nil }
-        UserDefaults.standard.set(pushEnabled, forKey: "nitro.usercom.push-enabled")
-        if pushEnabled { DispatchQueue.main.async { UserComPresentationDelegate.install() } }
+        withMessagingState {
+            let wasEnabled = self.pushEnabled || self.inAppEnabled
+            self.pushEnabled = pushEnabled
+            self.inAppEnabled = inAppEnabled
+            if !inAppEnabled { pendingInAppLink = nil; activeInAppOwner = nil }
+            UserDefaults.standard.set(pushEnabled, forKey: "nitro.usercom.push-enabled")
+            if wasEnabled && !pushEnabled && !inAppEnabled { pushApi.invalidatePendingBindings() }
+        }
+        if pushEnabled {
+            DispatchQueue.main.async {
+                if self.withMessagingState({ self.pushEnabled }) { UserComPresentationDelegate.install() }
+            }
+        }
         if !pushEnabled {
             let center = UNUserNotificationCenter.current()
             center.getPendingNotificationRequests { requests in
+                guard !self.withMessagingState({ self.pushEnabled }) else { return }
                 center.removePendingNotificationRequests(withIdentifiers: requests.filter {
                     $0.identifier.hasPrefix("usercom-")
                 }.map { $0.identifier })
             }
             center.getDeliveredNotifications { notifications in
+                guard !self.withMessagingState({ self.pushEnabled }) else { return }
                 center.removeDeliveredNotifications(withIdentifiers: notifications.filter {
                     $0.request.identifier.hasPrefix("usercom-")
                 }.map { $0.request.identifier })
@@ -41,24 +59,30 @@ class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelega
     }
 
     func setNotificationLinkHandler(handler: ((String) -> Void)?) throws {
-        linkHandler = handler
-        if let handler, inAppEnabled, let pending = pendingInAppLink {
+        let pending: String? = withMessagingState {
+            linkHandler = handler
+            guard handler != nil, inAppEnabled else { return nil }
+            let pending = pendingInAppLink
             pendingInAppLink = nil
-            handler(pending)
+            return pending
         }
+        if let handler, let pending { handler(pending) }
     }
 
     func inAppNotificationDidClick(url: URL) -> Bool {
-        guard inAppEnabled, activeInAppOwner == pushApi.userId else { return true }
-        if let linkHandler { linkHandler(url.absoluteString) }
-        else { pendingInAppLink = url.absoluteString }
+        let handler: ((String) -> Void)? = withMessagingState {
+            guard inAppEnabled, activeInAppOwner == pushApi.userId else { return nil }
+            if linkHandler == nil { pendingInAppLink = url.absoluteString }
+            return linkHandler
+        }
+        handler?(url.absoluteString)
         return true
     }
 
     func consumeInitialNotification() throws -> AnyMap? { return nil }
 
     func registerPushToken(token: String) throws -> Promise<Void> {
-        guard pushEnabled || inAppEnabled else {
+        guard withMessagingState({ pushEnabled || inAppEnabled }) else {
             return Promise.rejected(withError: NSError(domain: "Messaging is disabled", code: 1))
         }
         let promise = Promise<Void>()
@@ -85,7 +109,8 @@ class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelega
         if let owner = payload["_nitro_user_id"] as? String, owner != pushApi.userId {
             return Promise.resolved(withResult: false)
         }
-        guard inApp ? (inAppEnabled && foreground && !opened) : pushEnabled else {
+        let owner = pushApi.userId
+        guard withMessagingState({ inApp ? (inAppEnabled && foreground && !opened) : pushEnabled }) else {
             return Promise.resolved(withResult: false)
         }
         let promise = Promise<Bool>()
@@ -98,8 +123,12 @@ class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelega
             }
         } else if inApp {
             DispatchQueue.main.async {
-                guard self.inAppEnabled, let sdk = UserSDK.default else { promise.resolve(withResult: false); return }
-                self.activeInAppOwner = self.pushApi.userId
+                let allowed = self.withMessagingState {
+                    guard self.inAppEnabled, self.pushApi.userId == owner else { return false }
+                    self.activeInAppOwner = owner
+                    return true
+                }
+                guard allowed, let sdk = UserSDK.default else { promise.resolve(withResult: false); return }
                 sdk.inAppNotificationClickDelegate = self
                 sdk.handleNotification(userInfo: payload)
                 promise.resolve(withResult: true)
@@ -113,13 +142,13 @@ class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelega
             content.sound = .default
             let id = payload["id"] as? String ?? UUID().uuidString
             var userInfo = payload
-            userInfo["_nitro_user_id"] = pushApi.userId
+            userInfo["_nitro_user_id"] = owner
             // Retain the original FCM message ID so RNFB forwards local taps too.
             userInfo["gcm.message_id"] = payload["gcm.message_id"] ?? id
             userInfo["_nitro_local"] = "1"
             content.userInfo = userInfo
             DispatchQueue.main.async {
-                guard self.pushEnabled, self.pushApi.userId == userInfo["_nitro_user_id"] as? String else {
+                guard self.withMessagingState({ self.pushEnabled && self.pushApi.userId == owner }) else {
                     promise.resolve(withResult: false); return
                 }
                 UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "usercom-\(id)", content: content, trigger: nil)) { error in
@@ -183,73 +212,90 @@ class HybridUserComModule: HybridUserComModuleSpec, InAppNotificationClickDelega
     
     func registerUser(userData: UserComModuleUserData) throws -> NitroModules.Promise<UserComModuleRegisterUserResponse> {
         let promise = Promise<UserComModuleRegisterUserResponse>()
-        
-        guard let sdk: UserSDK = UserSDK.default else {
-            promise.reject(withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0))
-            return promise
+        let requestGeneration = withMessagingState {
+            registrationGeneration &+= 1
+            return registrationGeneration
         }
-        
-        var standardData: [UserSDK.UserDataKey: String?] = [.userId: userData.id]
-        if let firstName = userData.firstName { standardData[.firstName] = firstName }
-        if let lastName = userData.lastName { standardData[.lastName] = lastName }
-        if let email = userData.email { standardData[.email] = email }
-        if let phoneNumber = userData.phoneNumber { standardData[.phone] = phoneNumber }
-
-        sdk.setUserData(standardData) { success, error in
-            if let error = error {
-                promise.reject(withError: error)
+        let isCurrent = { self.withMessagingState { self.registrationGeneration == requestGeneration } }
+        DispatchQueue.main.async {
+            guard isCurrent() else {
+                promise.reject(withError: NSError(domain: "User.com registration superseded", code: 1))
                 return
             }
-            guard success else {
-                promise.reject(withError: NSError(domain: "User.com identify failed", code: 1))
+            guard let sdk = UserSDK.default else {
+                promise.reject(withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0))
                 return
             }
-
-            guard let attributes = userData.attributes, !attributes.isEmpty else {
-                self.pushApi.identify(id: userData.id, key: sdk.userId ?? "")
-                promise.resolve(withResult: UserComModuleRegisterUserResponse.first(NullType.null))
-                return
+            let identified = {
+                DispatchQueue.main.async {
+                    let current = self.withMessagingState {
+                        guard self.registrationGeneration == requestGeneration else { return false }
+                        self.pushApi.identify(id: userData.id, key: sdk.userId ?? "")
+                        return true
+                    }
+                    if current { promise.resolve(withResult: UserComModuleRegisterUserResponse.first(NullType.null)) }
+                    else { promise.reject(withError: NSError(domain: "User.com registration superseded", code: 1)) }
+                }
             }
-
-            sdk.setCustomUserData(attributes.mapValues { $0 }) { attributesSuccess, attributesError in
-                if let attributesError = attributesError {
-                    promise.reject(withError: attributesError)
-                } else if !attributesSuccess {
-                    promise.reject(withError: NSError(domain: "User.com attributes update failed", code: 1))
-                } else {
-                    self.pushApi.identify(id: userData.id, key: sdk.userId ?? "")
-                    promise.resolve(withResult: UserComModuleRegisterUserResponse.first(NullType.null))
+            var standardData: [UserSDK.UserDataKey: String?] = [.userId: userData.id]
+            if let firstName = userData.firstName { standardData[.firstName] = firstName }
+            if let lastName = userData.lastName { standardData[.lastName] = lastName }
+            if let email = userData.email { standardData[.email] = email }
+            if let phoneNumber = userData.phoneNumber { standardData[.phone] = phoneNumber }
+            sdk.setUserData(standardData) { success, error in
+                if let error { promise.reject(withError: error); return }
+                guard success else {
+                    promise.reject(withError: NSError(domain: "User.com identify failed", code: 1))
+                    return
+                }
+                guard let attributes = userData.attributes, !attributes.isEmpty else { identified(); return }
+                DispatchQueue.main.async {
+                    guard isCurrent() else {
+                        promise.reject(withError: NSError(domain: "User.com registration superseded", code: 1))
+                        return
+                    }
+                    sdk.setCustomUserData(attributes.mapValues { $0 }) { success, error in
+                        if let error { promise.reject(withError: error) }
+                        else if !success { promise.reject(withError: NSError(domain: "User.com attributes update failed", code: 1)) }
+                        else { identified() }
+                    }
                 }
             }
         }
-        
         return promise
     }
-    
+
     func logout() throws -> NitroModules.Promise<Void> {
         let promise = Promise<Void>()
-        
-        guard let sdk: UserSDK = UserSDK.default else {
-            promise.reject(withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0))
-            return promise
-        }
-        
         try setMessagingEnabled(pushEnabled: false, inAppEnabled: false)
+        let requestGeneration = withMessagingState {
+            registrationGeneration &+= 1
+            linkHandler = nil
+            pendingInAppLink = nil
+            activeInAppOwner = nil
+            pushApi.clearIdentity()
+            return registrationGeneration
+        }
         pushApi.unbind { removalError in
-            sdk.logout(fcmToken: nil) { success, error in
-                if let error = error ?? removalError {
-                    promise.reject(withError: error)
-                } else if !success {
-                    promise.reject(withError: NSError(domain: "User.com logout failed", code: 1))
-                } else {
-                    promise.resolve()
+            DispatchQueue.main.async {
+                guard self.withMessagingState({ self.registrationGeneration == requestGeneration }) else {
+                    promise.reject(withError: NSError(domain: "User.com contact changed during logout", code: 1))
+                    return
+                }
+                guard let sdk = UserSDK.default else {
+                    promise.reject(withError: NSError(domain: "SDK is not initialized, call initialize() first", code: 0))
+                    return
+                }
+                sdk.logout(fcmToken: nil) { success, error in
+                    if let error = error ?? removalError { promise.reject(withError: error) }
+                    else if !success { promise.reject(withError: NSError(domain: "User.com logout failed", code: 1)) }
+                    else { promise.resolve() }
                 }
             }
         }
-        
         return promise
     }
-    
+
     private func mapToProductEventType(_ eventType: UserComProductEventType) -> UserSDK.EventType {
         switch eventType {
             case .addtocart: return .addToCart
