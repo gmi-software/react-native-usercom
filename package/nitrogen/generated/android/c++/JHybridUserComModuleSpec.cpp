@@ -21,17 +21,20 @@ namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 #include <variant>
 #include "JUserComModuleRegisterUserResponse.hpp"
 #include <NitroModules/JNull.hpp>
+#include <NitroModules/AnyMap.hpp>
+#include <optional>
+#include <NitroModules/JAnyMap.hpp>
 #include "UserComModuleConfig.hpp"
 #include "JUserComModuleConfig.hpp"
-#include <optional>
 #include "UserComModuleUserData.hpp"
 #include "JUserComModuleUserData.hpp"
 #include <unordered_map>
 #include "JUserComModuleAttributeValue.hpp"
+#include <functional>
+#include "JFunc_void_std__string.hpp"
+#include <NitroModules/JNICallable.hpp>
 #include "UserComProductEventType.hpp"
 #include "JUserComProductEventType.hpp"
-#include <NitroModules/AnyMap.hpp>
-#include <NitroModules/JAnyMap.hpp>
 
 namespace margelo::nitro::usercom {
 
@@ -110,6 +113,65 @@ namespace margelo::nitro::usercom {
       });
       return __promise;
     }();
+  }
+  void JHybridUserComModuleSpec::setMessagingEnabled(bool pushEnabled, bool inAppEnabled) {
+    static const auto method = javaClassStatic()->getMethod<void(jboolean /* pushEnabled */, jboolean /* inAppEnabled */)>("setMessagingEnabled");
+    method(_javaPart, pushEnabled, inAppEnabled);
+  }
+  std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::registerPushToken(const std::string& token) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* token */)>("registerPushToken");
+    auto __result = method(_javaPart, jni::make_jstring(token));
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::unregisterPushToken() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>()>("unregisterPushToken");
+    auto __result = method(_javaPart);
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<bool>> JHybridUserComModuleSpec::handleNotification(const std::shared_ptr<AnyMap>& data, bool foreground, bool opened) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<JAnyMap::javaobject> /* data */, jboolean /* foreground */, jboolean /* opened */)>("handleNotification");
+    auto __result = method(_javaPart, JAnyMap::create(data), foreground, opened);
+    return [&]() {
+      auto __promise = Promise<bool>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JBoolean>(__boxedResult);
+        __promise->resolve(static_cast<bool>(__result->value()));
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  void JHybridUserComModuleSpec::setNotificationLinkHandler(const std::optional<std::function<void(const std::string& /* url */)>>& handler) {
+    static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_std__string::javaobject> /* handler */)>("setNotificationLinkHandler_cxx");
+    method(_javaPart, handler.has_value() ? JFunc_void_std__string_cxx::fromCpp(handler.value()) : nullptr);
+  }
+  std::optional<std::shared_ptr<AnyMap>> JHybridUserComModuleSpec::consumeInitialNotification() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JAnyMap::javaobject>()>("consumeInitialNotification");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional(__result->cthis()->getMap()) : std::nullopt;
   }
   std::shared_ptr<Promise<void>> JHybridUserComModuleSpec::sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) {
     static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* productId */, jni::alias_ref<JUserComProductEventType> /* eventType */, jni::alias_ref<JAnyMap::javaobject> /* params */)>("sendProductEvent");

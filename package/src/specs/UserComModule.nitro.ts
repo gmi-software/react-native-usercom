@@ -53,6 +53,21 @@ export interface UserComModule extends HybridObject<{
     userData: UserComModuleUserData
   ): Promise<UserComModuleRegisterUserResponse>
   logout(): Promise<void>
+  /** Gate message display independently from the host application's event tracking. */
+  setMessagingEnabled(pushEnabled: boolean, inAppEnabled: boolean): void
+  /** The host owns Firebase and requests OS permission; this only binds its token. */
+  registerPushToken(token: string): Promise<void>
+  /** Detaches the stored token, retaining failed removals for the next attempt. */
+  unregisterPushToken(): Promise<void>
+  /** Forward FCM data. Background callers must pass foreground=false. */
+  handleNotification(
+    data: AnyMap,
+    foreground: boolean,
+    opened: boolean
+  ): Promise<boolean>
+  setNotificationLinkHandler(handler: ((url: string) => void) | undefined): void
+  /** Android SDK notifications use their own launcher intent rather than RNFB's. */
+  consumeInitialNotification(): AnyMap | undefined
   sendProductEvent(
     productId: string,
     eventType: UserComProductEventType,

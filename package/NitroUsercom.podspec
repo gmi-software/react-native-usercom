@@ -17,10 +17,11 @@ Pod::Spec.new do |s|
     # Implementation (Swift)
     "ios/**/*.{swift}",
     # Autolinking/Registration (Objective-C++)
-    "ios/**/*.{m,mm}",
+    "ios/**/*.{h,m,mm}",
     # Implementation (C++ objects)
     "cpp/**/*.{hpp,cpp}",
   ]
+  s.public_header_files = ["ios/UserComPresentationDelegate.h"]
 
   load 'nitrogen/generated/ios/NitroUsercom+autolinking.rb'
   add_nitrogen_files(s)

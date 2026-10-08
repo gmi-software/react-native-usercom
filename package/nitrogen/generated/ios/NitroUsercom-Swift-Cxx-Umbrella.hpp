@@ -27,6 +27,7 @@ namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>

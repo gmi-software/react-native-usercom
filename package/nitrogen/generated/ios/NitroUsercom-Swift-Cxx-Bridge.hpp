@@ -293,6 +293,77 @@ namespace margelo::nitro::usercom::bridge::swift {
     return Func_void_std__variant_nitro__NullType__std__string__Wrapper(std::move(value));
   }
   
+  // pragma MARK: std::shared_ptr<Promise<bool>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<bool>>`.
+   */
+  using std__shared_ptr_Promise_bool__ = std::shared_ptr<Promise<bool>>;
+  inline std::shared_ptr<Promise<bool>> create_std__shared_ptr_Promise_bool__() noexcept {
+    return Promise<bool>::create();
+  }
+  inline PromiseHolder<bool> wrap_std__shared_ptr_Promise_bool__(std::shared_ptr<Promise<bool>> promise) noexcept {
+    return PromiseHolder<bool>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void(bool /* result */)>
+  /**
+   * Specialized version of `std::function<void(bool)>`.
+   */
+  using Func_void_bool = std::function<void(bool /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(bool / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_bool_Wrapper final {
+  public:
+    explicit Func_void_bool_Wrapper(std::function<void(bool /* result */)>&& func): _function(std::make_unique<std::function<void(bool /* result */)>>(std::move(func))) {}
+    inline void call(bool result) const noexcept {
+      _function->operator()(result);
+    }
+  private:
+    std::unique_ptr<std::function<void(bool /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_bool create_Func_void_bool(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_bool_Wrapper wrap_Func_void_bool(Func_void_bool value) noexcept {
+    return Func_void_bool_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::function<void(const std::string& /* url */)>
+  /**
+   * Specialized version of `std::function<void(const std::string&)>`.
+   */
+  using Func_void_std__string = std::function<void(const std::string& /* url */)>;
+  /**
+   * Wrapper class for a `std::function<void(const std::string& / * url * /)>`, this can be used from Swift.
+   */
+  class Func_void_std__string_Wrapper final {
+  public:
+    explicit Func_void_std__string_Wrapper(std::function<void(const std::string& /* url */)>&& func): _function(std::make_unique<std::function<void(const std::string& /* url */)>>(std::move(func))) {}
+    inline void call(std::string url) const noexcept {
+      _function->operator()(url);
+    }
+  private:
+    std::unique_ptr<std::function<void(const std::string& /* url */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_std__string_Wrapper wrap_Func_void_std__string(Func_void_std__string value) noexcept {
+    return Func_void_std__string_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<std::function<void(const std::string& /* url */)>>
+  /**
+   * Specialized version of `std::optional<std::function<void(const std::string& / * url * /)>>`.
+   */
+  using std__optional_std__function_void_const_std__string_____url______ = std::optional<std::function<void(const std::string& /* url */)>>;
+  inline std::optional<std::function<void(const std::string& /* url */)>> create_std__optional_std__function_void_const_std__string_____url______(const std::function<void(const std::string& /* url */)>& value) noexcept {
+    return std::optional<std::function<void(const std::string& /* url */)>>(value);
+  }
+  inline bool has_value_std__optional_std__function_void_const_std__string_____url______(const std::optional<std::function<void(const std::string& /* url */)>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::function<void(const std::string& /* url */)> get_std__optional_std__function_void_const_std__string_____url______(const std::optional<std::function<void(const std::string& /* url */)>>& optional) noexcept {
+    return *optional;
+  }
+  
   // pragma MARK: std::optional<std::shared_ptr<AnyMap>>
   /**
    * Specialized version of `std::optional<std::shared_ptr<AnyMap>>`.
@@ -336,6 +407,33 @@ namespace margelo::nitro::usercom::bridge::swift {
   }
   inline Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____ create_Result_std__shared_ptr_Promise_std__variant_nitro__NullType__std__string____(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<void>
+  using Result_void_ = Result<void>;
+  inline Result_void_ create_Result_void_() noexcept {
+    return Result<void>::withValue();
+  }
+  inline Result_void_ create_Result_void_(const std::exception_ptr& error) noexcept {
+    return Result<void>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<bool>>>
+  using Result_std__shared_ptr_Promise_bool___ = Result<std::shared_ptr<Promise<bool>>>;
+  inline Result_std__shared_ptr_Promise_bool___ create_Result_std__shared_ptr_Promise_bool___(const std::shared_ptr<Promise<bool>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<bool>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_bool___ create_Result_std__shared_ptr_Promise_bool___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<bool>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::optional<std::shared_ptr<AnyMap>>>
+  using Result_std__optional_std__shared_ptr_AnyMap___ = Result<std::optional<std::shared_ptr<AnyMap>>>;
+  inline Result_std__optional_std__shared_ptr_AnyMap___ create_Result_std__optional_std__shared_ptr_AnyMap___(const std::optional<std::shared_ptr<AnyMap>>& value) noexcept {
+    return Result<std::optional<std::shared_ptr<AnyMap>>>::withValue(value);
+  }
+  inline Result_std__optional_std__shared_ptr_AnyMap___ create_Result_std__optional_std__shared_ptr_AnyMap___(const std::exception_ptr& error) noexcept {
+    return Result<std::optional<std::shared_ptr<AnyMap>>>::withError(error);
   }
 
 } // namespace margelo::nitro::usercom::bridge::swift

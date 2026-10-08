@@ -57,6 +57,12 @@ namespace margelo::nitro::usercom {
     std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) override;
     std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> registerUser(const UserComModuleUserData& userData) override;
     std::shared_ptr<Promise<void>> logout() override;
+    void setMessagingEnabled(bool pushEnabled, bool inAppEnabled) override;
+    std::shared_ptr<Promise<void>> registerPushToken(const std::string& token) override;
+    std::shared_ptr<Promise<void>> unregisterPushToken() override;
+    std::shared_ptr<Promise<bool>> handleNotification(const std::shared_ptr<AnyMap>& data, bool foreground, bool opened) override;
+    void setNotificationLinkHandler(const std::optional<std::function<void(const std::string& /* url */)>>& handler) override;
+    std::optional<std::shared_ptr<AnyMap>> consumeInitialNotification() override;
     std::shared_ptr<Promise<void>> sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) override;
     std::shared_ptr<Promise<void>> sendCustomEvent(const std::string& eventName, const std::shared_ptr<AnyMap>& data) override;
     std::shared_ptr<Promise<void>> sendScreenEvent(const std::string& screenName) override;

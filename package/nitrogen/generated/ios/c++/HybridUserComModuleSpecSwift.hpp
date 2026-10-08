@@ -27,8 +27,9 @@ namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 #include <variant>
 #include <unordered_map>
 #include <NitroModules/Null.hpp>
-#include "UserComProductEventType.hpp"
 #include <NitroModules/AnyMap.hpp>
+#include <functional>
+#include "UserComProductEventType.hpp"
 
 #include "NitroUsercom-Swift-Cxx-Umbrella.hpp"
 
@@ -92,6 +93,50 @@ namespace margelo::nitro::usercom {
     }
     inline std::shared_ptr<Promise<void>> logout() override {
       auto __result = _swiftPart.logout();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void setMessagingEnabled(bool pushEnabled, bool inAppEnabled) override {
+      auto __result = _swiftPart.setMessagingEnabled(std::forward<decltype(pushEnabled)>(pushEnabled), std::forward<decltype(inAppEnabled)>(inAppEnabled));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::shared_ptr<Promise<void>> registerPushToken(const std::string& token) override {
+      auto __result = _swiftPart.registerPushToken(token);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<void>> unregisterPushToken() override {
+      auto __result = _swiftPart.unregisterPushToken();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<bool>> handleNotification(const std::shared_ptr<AnyMap>& data, bool foreground, bool opened) override {
+      auto __result = _swiftPart.handleNotification(data, std::forward<decltype(foreground)>(foreground), std::forward<decltype(opened)>(opened));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void setNotificationLinkHandler(const std::optional<std::function<void(const std::string& /* url */)>>& handler) override {
+      auto __result = _swiftPart.setNotificationLinkHandler(handler);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::optional<std::shared_ptr<AnyMap>> consumeInitialNotification() override {
+      auto __result = _swiftPart.consumeInitialNotification();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

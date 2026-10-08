@@ -2,7 +2,13 @@ package com.margelo.nitro.usercom
 
 import android.os.Handler
 import android.os.Looper
+import android.app.Application
+import android.content.Intent
+import android.graphics.Typeface
 import android.util.Log
+import com.facebook.react.bridge.BaseActivityEventListener
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.RemoteMessage
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.NitroModules
@@ -15,12 +21,159 @@ import com.user.sdk.customer.Customer
 import com.user.sdk.customer.CustomerUpdateCallback
 import com.user.sdk.customer.RegisterResponse
 import com.user.sdk.events.ProductEventType
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 @Keep
 @DoNotStrip
 class HybridUserComModule : HybridUserComModuleSpec() {
 
     private val defaultInitTimeout = 10000L
+    private val registrationGeneration = AtomicLong()
+    private val messagingLock = Any()
+    private val pushApi by lazy {
+        UserComPushApi(requireNotNull(NitroModules.applicationContext))
+    }
+    @Volatile private var pushEnabled = false
+    @Volatile private var inAppEnabled = false
+    @Volatile private var linkHandler: ((String) -> Unit)? = null
+    @Volatile private var pendingIntent: Intent? = null
+    @Volatile private var pendingInAppLink: String? = null
+    @Volatile private var activeInAppOwner: String? = null
+    private var activityListenerInstalled = false
+
+    private fun configureMessageHandlers(instance: UserCom) {
+        instance.setFontResolver { name ->
+            // Templates may refer to a font unavailable in the host application.
+            Typeface.create(name, Typeface.NORMAL) ?: Typeface.DEFAULT
+        }
+        if (inAppEnabled || linkHandler != null) {
+            instance.setInAppNotificationClickHandler { url ->
+                val handler = synchronized(messagingLock) {
+                    if (!inAppEnabled || activeInAppOwner != pushApi.currentUserId()) null
+                    else {
+                        if (linkHandler == null) pendingInAppLink = url
+                        linkHandler
+                    }
+                }
+                handler?.invoke(url)
+            }
+        }
+        val installListener = synchronized(messagingLock) {
+            if (activityListenerInstalled) false else { activityListenerInstalled = true; true }
+        }
+        if (installListener) {
+            NitroModules.applicationContext?.addActivityEventListener(object : BaseActivityEventListener() {
+                override fun onNewIntent(intent: Intent) {
+                    pendingIntent = intent
+                    if (pushEnabled && linkHandler != null && intent.getStringExtra("user_com_notification") != null) {
+                        val owner = intent.getStringExtra("_nitro_user_id")
+                        if (owner != null && owner != pushApi.currentUserId()) { pendingIntent = null; return }
+                        intent.getStringExtra("id")?.let { id ->
+                            pushApi.clicked(id) { error ->
+                                if (error != null) Log.w("UserCom", "Notification click could not be recorded", error)
+                            }
+                        }
+                        intent.getStringExtra("link")?.let { link -> linkHandler?.invoke(link) }
+                        intent.removeExtra("user_com_notification")
+                        pendingIntent = null
+                    }
+                }
+            })
+        }
+    }
+
+    override fun setMessagingEnabled(pushEnabled: Boolean, inAppEnabled: Boolean) {
+        synchronized(messagingLock) {
+            val wasEnabled = this.pushEnabled || this.inAppEnabled
+            this.pushEnabled = pushEnabled
+            this.inAppEnabled = inAppEnabled
+            UserComMessagePolicy.setEnabled(requireNotNull(NitroModules.applicationContext), pushEnabled, inAppEnabled)
+            if (!inAppEnabled) { pendingInAppLink = null; activeInAppOwner = null }
+            if (!pushEnabled && !inAppEnabled) {
+                pendingIntent = null
+                if (wasEnabled) pushApi.invalidatePendingBindings()
+            }
+        }
+        if (inAppEnabled) runCatching { UserCom.getInstance() }.onSuccess { configureMessageHandlers(it) }
+    }
+
+    override fun setNotificationLinkHandler(handler: ((String) -> Unit)?) {
+        val pending = synchronized(messagingLock) {
+            linkHandler = handler
+            val pending = if (inAppEnabled && handler != null) pendingInAppLink else null
+            if (handler != null) pendingInAppLink = null
+            pending
+        }
+        if (handler != null) {
+            runCatching { UserCom.getInstance() }.onSuccess { configureMessageHandlers(it) }
+            if (pending != null) handler(pending)
+        }
+    }
+
+    override fun consumeInitialNotification(): AnyMap? {
+        val activity = NitroModules.applicationContext?.currentActivity
+        val intent = synchronized(messagingLock) {
+            val pending = pendingIntent
+            pendingIntent = null
+            pending
+        } ?: activity?.intent ?: return null
+        if (intent.getStringExtra("user_com_notification") == null) return null
+        val result = AnyMap()
+        intent.extras?.keySet()?.forEach { key ->
+            intent.extras?.get(key)?.let { result.setString(key, it.toString()) }
+        }
+        intent.removeExtra("user_com_notification")
+        return result
+    }
+
+    override fun registerPushToken(token: String): Promise<Unit> {
+        if (!pushEnabled && !inAppEnabled) return Promise.rejected(Throwable("Messaging is disabled"))
+        val promise = Promise<Unit>()
+        pushApi.bind(token) { error ->
+            if (error != null) promise.reject(error) else promise.resolve()
+        }
+        return promise
+    }
+
+    override fun unregisterPushToken(): Promise<Unit> {
+        val promise = Promise<Unit>()
+        pushApi.unbind { error ->
+            if (error != null) promise.reject(error) else promise.resolve()
+        }
+        return promise
+    }
+
+    override fun handleNotification(data: AnyMap, foreground: Boolean, opened: Boolean): Promise<Boolean> {
+        val payload = data.toHashMap().mapValues { it.value.toString() }
+        if (!payload.containsValue("user_com_notification")) return Promise.resolved(false)
+        val owner = pushApi.currentUserId()
+        if (payload["_nitro_user_id"]?.let { it != owner } == true) return Promise.resolved(false)
+        val inApp = payload["type"] == "4" || payload.containsKey("inapp_message")
+        if (inApp && (!inAppEnabled || !foreground || opened)) return Promise.resolved(false)
+        if (!inApp && !pushEnabled) return Promise.resolved(false)
+        val promise = Promise<Boolean>()
+        if (opened) {
+            val id = payload["id"] ?: return Promise.rejected(Throwable("Missing notification delivery ID"))
+            pushApi.clicked(id) { error ->
+                if (error != null) promise.reject(error) else promise.resolve(true)
+            }
+        } else {
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    if (inApp && !inAppEnabled || !inApp && !pushEnabled) { promise.resolve(false); return@post }
+                    if (pushApi.currentUserId() != owner) { promise.resolve(false); return@post }
+                    val context = requireNotNull(NitroModules.applicationContext)
+                    // RemoteMessage.Builder preserves the SDK's string-valued data contract.
+                    val ownedPayload = payload + ("_nitro_user_id" to owner)
+                    if (inApp) synchronized(messagingLock) { activeInAppOwner = owner }
+                    val message = RemoteMessage.Builder(context.packageName).setData(ownedPayload).build()
+                    promise.resolve(UserCom.getInstance().onNotification(context, message))
+                } catch (error: Throwable) { promise.reject(error) }
+            }
+        }
+        return promise
+    }
 
     private fun buildCustomer(customerData: UserComModuleUserData): Customer {
         val customer = Customer()
@@ -47,11 +200,12 @@ class HybridUserComModule : HybridUserComModuleSpec() {
     }
 
     override fun initialize(config: UserComModuleConfig): Promise<Unit> {
-        val application = NitroModules.applicationContext?.currentActivity?.application
+        val application = NitroModules.applicationContext?.applicationContext as? Application
             ?: return Promise.rejected(
                 Throwable("Application context is not available")
             )
 
+        try { pushApi.configure(config) } catch (error: Throwable) { return Promise.rejected(error) }
         val instance = try {
             UserCom.getInstance()
         } catch (_: Throwable) {
@@ -59,15 +213,18 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         }
         val promise = Promise<Unit>()
         if (instance != null) {
+            configureMessageHandlers(instance)
             Log.d("HybridUserComModule", "UserCom SDK already initialized")
             promise.resolve()
             return promise
         }
 
         val handler = Handler(Looper.getMainLooper())
+        val settled = AtomicBoolean(false)
 
         val timeoutRunnable = Runnable {
-            promise.reject(Throwable("UserCom SDK have not been initialized within given timeout"))
+            if (settled.compareAndSet(false, true))
+                promise.reject(Throwable("UserCom SDK have not been initialized within given timeout"))
         }
 
         handler.postDelayed(timeoutRunnable, config.initTimeoutMs?.toLong() ?: defaultInitTimeout)
@@ -75,12 +232,18 @@ class HybridUserComModule : HybridUserComModuleSpec() {
         val initHandler = object : UserCom.OnSdkInitializedListener {
             override fun onSdkInitialized(p0: Customer) {
                 handler.removeCallbacks(timeoutRunnable)
-                promise.resolve()
+                try {
+                    configureMessageHandlers(UserCom.getInstance())
+                    if (settled.compareAndSet(false, true)) promise.resolve()
+                } catch (error: Throwable) {
+                    if (settled.compareAndSet(false, true)) promise.reject(error)
+                }
             }
 
             override fun onUserRegistrationFailed() {
                 handler.removeCallbacks(timeoutRunnable)
-                promise.reject(Throwable("User registration failed. Check native exceptions."))
+                if (settled.compareAndSet(false, true))
+                    promise.reject(Throwable("User registration failed. Check native exceptions."))
             }
         }
 
@@ -101,7 +264,7 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             builder.build()
         } catch (error: Throwable) {
             handler.removeCallbacks(timeoutRunnable)
-            promise.reject(error)
+            if (settled.compareAndSet(false, true)) promise.reject(error)
         }
 
         return promise
@@ -123,27 +286,86 @@ class HybridUserComModule : HybridUserComModuleSpec() {
             return Promise.rejected(error)
         }
 
-        instance.register(customer, object : CustomerUpdateCallback {
+        val requestGeneration = registrationGeneration.incrementAndGet()
+        val settled = AtomicBoolean(false)
+        fun reject(error: Throwable) { if (settled.compareAndSet(false, true)) promise.reject(error) }
+        fun resolve(key: String) {
+            if (registrationGeneration.get() != requestGeneration) {
+                reject(Throwable("User.com registration superseded"))
+            } else if (settled.compareAndSet(false, true)) {
+                promise.resolve(UserComModuleRegisterUserResponse.create(key))
+            }
+        }
+        try {
+            instance.register(customer, object : CustomerUpdateCallback {
                 override fun onSuccess(p0: RegisterResponse) {
-                    promise.resolve(UserComModuleRegisterUserResponse.create(p0.key))
+                    val current = synchronized(messagingLock) {
+                        if (registrationGeneration.get() != requestGeneration) false
+                        else { pushApi.identify(userData.id, p0.key); true }
+                    }
+                    if (!current) { reject(Throwable("User.com registration superseded")); return }
+                    // Android SDK automatically binds its token during register(). Remember
+                    // it even in analytics-only mode so the host can detach it immediately.
+                    try { FirebaseMessaging.getInstance().token
+                        .addOnSuccessListener { token ->
+                            if (registrationGeneration.get() != requestGeneration) {
+                                reject(Throwable("User.com registration superseded"))
+                                return@addOnSuccessListener
+                            }
+                            try {
+                                pushApi.rememberToken(token) { error ->
+                                    if (error != null) reject(error)
+                                    else resolve(p0.key)
+                                }
+                            } catch (error: Throwable) { reject(error) }
+                        }
+                        .addOnFailureListener { error ->
+                            Log.w("UserCom", "Contact registered; automatic Firebase token could not be remembered", error)
+                            resolve(p0.key)
+                        }
+                    } catch (error: Throwable) {
+                        Log.w("UserCom", "Contact registered; automatic Firebase token could not be remembered", error)
+                        resolve(p0.key)
+                    }
                 }
 
                 override fun onFailure(p0: Throwable) {
-                    promise.reject(p0)
+                    reject(p0)
                 }
             })
+        } catch (error: Throwable) { reject(error) }
         return promise
     }
 
     override fun logout(): Promise<Unit> {
+        setMessagingEnabled(false, false)
+        val requestGeneration = synchronized(messagingLock) {
+            val current = registrationGeneration.incrementAndGet()
+            linkHandler = null
+            pendingInAppLink = null
+            activeInAppOwner = null
+            pendingIntent = null
+            pushApi.clearIdentity()
+            current
+        }
         val instance = try {
             UserCom.getInstance()
         } catch (_: Throwable) {
             return Promise.rejected(Throwable("SDK is not initialized, call initialize() first"))
         }
-        instance.logout()
-
-        return Promise.resolved()
+        val promise = Promise<Unit>()
+        pushApi.unbind { error ->
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    check(registrationGeneration.get() == requestGeneration) { "User.com contact changed during logout" }
+                    instance.logout()
+                    // SDK 1.2.14 provides no logout-completed callback. This resolves
+                    // after token removal and dispatch, not after anonymous registration.
+                    if (error != null) promise.reject(error) else promise.resolve()
+                } catch (sdkError: Throwable) { promise.reject(sdkError) }
+            }
+        }
+        return promise
     }
 
     override fun sendProductEvent(

@@ -22,6 +22,7 @@ Built with [Nitro Modules](https://nitro.margelo.com/) for high-performance nati
 - ✅ **Contact identity** - Register or update a User.com contact and reset it on logout; app authentication remains in the host app
 - ✅ **Event tracking** - Send custom events, product events, and screen views
 - ✅ **Android push receiver** - Bundled FCM service, registered by default for compatibility with 0.0.5; the host app must configure Firebase
+- ✅ **Host-managed messaging** - Forward FCM messages, bind/unbind tokens, handle links, and gate push/in-app display independently from app events (0.0.7)
 - ✅ **TypeScript API** - Typed methods and user data
 - ✅ **iOS and Android** - One JavaScript API backed by native User.com SDKs
 - ✅ **Nitro Modules** - Native bridge built with Nitro Modules
@@ -242,7 +243,7 @@ function UserComWithHook() {
 
 ## Firebase Configuration
 
-The package does not require `@react-native-firebase/messaging` for event tracking. Configure Firebase Cloud Messaging in the host app if it needs User.com push notifications.
+The package does not require `@react-native-firebase/messaging` for event tracking. On Android, User.com SDK 1.2.14 itself includes native Firebase dependencies and retrieves an FCM token during contact registration, so valid native Firebase configuration is still required for that registration path. The iOS SDK has no Firebase dependency for analytics. Configure the host's messaging stack if it needs User.com push notifications.
 
 ### 1. Create a Firebase project
 
@@ -375,6 +376,72 @@ The bundled Android messaging service can process a User.com message only after 
 ---
 
 ## API Reference
+
+### Host-managed push and in-app messages (0.0.7)
+
+The package does not request notification permission or choose your consent rules. The host owns authentication, Firebase configuration, OS permission, background handlers, and navigation. Analytics consent and messaging preference can be independent. Gate calls to `sendCustomEvent`, `sendScreenEvent`, and `sendProductEvent` in the host; disabling those calls does not suppress native SDK contact/device requests or its message view/click tracking.
+
+A host may use one OS permission result to enable both push and in-app, or keep separate choices. That policy belongs to the host; the package retains independent `pushEnabled` and `inAppEnabled` flags.
+
+When using React Native Firebase Messaging, set `androidRegisterMessagingService: false`. Keep one FCM receiver. Install matching versions of `@react-native-firebase/app` and `@react-native-firebase/messaging` in the host, not in this package. The iOS UserSDK 1.1.1 has no Firebase dependency. Android's upstream SDK includes native Firebase dependencies and automatically registers a token during `registerUser`.
+
+After successful `initialize` and `registerUser`:
+
+```ts
+// Decide these values using the host's preferences and OS permission.
+UserComModule.setMessagingEnabled(pushAllowed, inAppAllowed)
+UserComModule.setNotificationLinkHandler(url => openValidatedLink(url))
+await UserComModule.registerPushToken(fcmToken)
+
+// Forward string-valued FCM data from foreground/background listeners.
+// Preserve messageId as 'gcm.message_id' for iOS local notification taps.
+await UserComModule.handleNotification(data, isForeground, false)
+
+// For a tapped push, after auth and navigation are ready:
+await UserComModule.handleNotification(data, true, true)
+```
+
+`handleNotification` returns whether the User.com message was handled. In-app messages are displayed only with `inAppAllowed` and `isForeground`; background callers must never pass `true`. If FCM/APNs already displayed a notification payload in the background, do not forward it for display again. Still forward its tap with `opened=true`. In-app links use the registered link handler. Validate URLs in the host before navigation.
+
+On iOS, a resolved `handleNotification` promise confirms forwarding to the native SDK or scheduling local display, not that an in-app view or banner became visible. Verify actual push/in-app delivery and links on devices; successful compilation and token registration alone do not confirm campaign delivery.
+
+For Android SDK-generated notifications, call `consumeInitialNotification()` after identity/navigation are ready and forward that data as an opened push. Warm launcher intents also invoke the link handler. RNFB handles iOS local taps when the original FCM message ID is forwarded; other push stacks must forward their notification-center responses. The iOS bridge preserves the host's notification delegate when showing its own local foreground banners.
+
+On token rotation, call `registerPushToken` again. In a host using React Native Firebase Messaging, opt-out cleanup can use:
+
+```ts
+import { getMessaging, setAutoInitEnabled, deleteToken } from '@react-native-firebase/messaging'
+
+UserComModule.setMessagingEnabled(false, false) // immediate display gate
+const results = await Promise.allSettled([
+  Promise.resolve().then(() => UserComModule.unregisterPushToken()),
+  (async () => {
+    try { await setAutoInitEnabled(getMessaging(), false) }
+    finally { await deleteToken(getMessaging()) }
+  })(),
+])
+const failure = results.find(result => result.status === 'rejected')
+if (failure?.status === 'rejected') throw failure.reason
+```
+
+For logout, use `UserComModule.logout()` instead of `unregisterPushToken()` in that example to reset the SDK and clear the bridge's contact identity as well. With other Firebase stacks, implement equivalent cleanup: attempt Firebase invalidation even when User.com removal fails. Persist the opt-out so cold/background launches cannot enable messaging again.
+
+Logout also clears queued links and the JS link callback; install the handler again after identifying the next contact. The host must retain its native notification-center delegate, as required by Apple's weak `delegate` property; the bridge forwards to it without taking over its lifetime.
+
+`registerPushToken` and `unregisterPushToken` use the documented Mobile SDK `ping` and `delete-fcm-token` endpoints. A successful new binding is not rejected by an older removal failure. Pending removals retain their original contact/workspace and are retried; DELETE 404/410 counts as already removed, while authentication, throttling and network failures remain pending. Successful ping transfers the token to the current contact, so older removal records for that same workspace/token are discarded to avoid deleting the new binding. Logout clears the active bridge identity immediately while preserving old removal records. No privileged public REST API key is needed.
+
+**Limits to test before release:** Android SDK 1.2.14 has no logout-completed callback: `logout()` waits for stored-token removal and dispatches the SDK reset, but cannot acknowledge the later anonymous registration. Verify logout/account changes on devices. In analytics-only mode Android SDK still obtains a token during contact registration: explicitly unbind it and invalidate it in Firebase. OS-displayed alert payloads cannot be canceled by a JS consent check that runs afterward. Rich iOS push images need a Notification Service Extension and are outside this bridge's text-push setup.
+
+For iOS, enable the Push Notifications capability, `aps-environment` with a matching signing profile, and the `remote-notification` background mode. Upload APNs credentials to the host's Firebase project and its Firebase service-account credentials to User.com's SDK Admin. Keep service-account/APNs secrets out of app envs. See [UserSDK 1.1.1](https://github.com/UserEngage/iOS-SDK/blob/1.1.1/README.md), [Mobile SDK token endpoints](https://apidocs.user.com/mobilesdk/push-without-sdk.html), and [RNFB messaging](https://rnfirebase.io/messaging/usage).
+
+| New method | Purpose |
+| --- | --- |
+| `setMessagingEnabled(pushEnabled, inAppEnabled): void` | Native display gates; does not request permission or change app event consent. |
+| `registerPushToken(token): Promise<void>` | Bind the host's FCM token to the identified contact. |
+| `unregisterPushToken(): Promise<void>` | Detach the stored token and retry pending removals. |
+| `handleNotification(data, foreground, opened): Promise<boolean>` | Display a received message or record an opened push. |
+| `setNotificationLinkHandler(handler \| undefined): void` | Route validated push/in-app URLs in the host. |
+| `consumeInitialNotification(): AnyMap \| undefined` | Consume Android SDK launcher data; iOS returns `undefined`. |
 
 ### `UserComModule`
 

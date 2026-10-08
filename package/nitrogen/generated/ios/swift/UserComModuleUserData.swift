@@ -78,7 +78,7 @@ public extension UserComModuleUserData {
       self.__id = std.string(newValue)
     }
   }
-
+  
   var email: String? {
     @inline(__always)
     get {
@@ -102,7 +102,7 @@ public extension UserComModuleUserData {
       }()
     }
   }
-
+  
   var firstName: String? {
     @inline(__always)
     get {
@@ -126,7 +126,7 @@ public extension UserComModuleUserData {
       }()
     }
   }
-
+  
   var lastName: String? {
     @inline(__always)
     get {
@@ -150,7 +150,7 @@ public extension UserComModuleUserData {
       }()
     }
   }
-
+  
   var phoneNumber: String? {
     @inline(__always)
     get {
@@ -174,7 +174,7 @@ public extension UserComModuleUserData {
       }()
     }
   }
-
+  
   var attributes: Dictionary<String, UserComModuleAttributeValue>? {
     @inline(__always)
     get {
