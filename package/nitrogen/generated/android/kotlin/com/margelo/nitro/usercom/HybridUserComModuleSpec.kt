@@ -62,6 +62,35 @@ abstract class HybridUserComModuleSpec: HybridObject() {
   
   @DoNotStrip
   @Keep
+  abstract fun setMessagingEnabled(pushEnabled: Boolean, inAppEnabled: Boolean): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun registerPushToken(token: String): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun unregisterPushToken(): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun handleNotification(data: AnyMap, foreground: Boolean, opened: Boolean): Promise<Boolean>
+  
+  abstract fun setNotificationLinkHandler(handler: ((url: String) -> Unit)?): Unit
+  
+  @DoNotStrip
+  @Keep
+  private fun setNotificationLinkHandler_cxx(handler: Func_void_std__string?): Unit {
+    val __result = setNotificationLinkHandler(handler?.let { it })
+    return __result
+  }
+  
+  @DoNotStrip
+  @Keep
+  abstract fun consumeInitialNotification(): AnyMap?
+  
+  @DoNotStrip
+  @Keep
   abstract fun sendProductEvent(productId: String, eventType: UserComProductEventType, params: AnyMap?): Promise<Unit>
   
   @DoNotStrip

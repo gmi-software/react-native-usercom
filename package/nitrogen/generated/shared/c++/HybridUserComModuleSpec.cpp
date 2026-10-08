@@ -17,6 +17,12 @@ namespace margelo::nitro::usercom {
       prototype.registerHybridMethod("initialize", &HybridUserComModuleSpec::initialize);
       prototype.registerHybridMethod("registerUser", &HybridUserComModuleSpec::registerUser);
       prototype.registerHybridMethod("logout", &HybridUserComModuleSpec::logout);
+      prototype.registerHybridMethod("setMessagingEnabled", &HybridUserComModuleSpec::setMessagingEnabled);
+      prototype.registerHybridMethod("registerPushToken", &HybridUserComModuleSpec::registerPushToken);
+      prototype.registerHybridMethod("unregisterPushToken", &HybridUserComModuleSpec::unregisterPushToken);
+      prototype.registerHybridMethod("handleNotification", &HybridUserComModuleSpec::handleNotification);
+      prototype.registerHybridMethod("setNotificationLinkHandler", &HybridUserComModuleSpec::setNotificationLinkHandler);
+      prototype.registerHybridMethod("consumeInitialNotification", &HybridUserComModuleSpec::consumeInitialNotification);
       prototype.registerHybridMethod("sendProductEvent", &HybridUserComModuleSpec::sendProductEvent);
       prototype.registerHybridMethod("sendCustomEvent", &HybridUserComModuleSpec::sendCustomEvent);
       prototype.registerHybridMethod("sendScreenEvent", &HybridUserComModuleSpec::sendScreenEvent);

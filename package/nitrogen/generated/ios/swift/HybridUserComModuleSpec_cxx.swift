@@ -182,6 +182,115 @@ open class HybridUserComModuleSpec_cxx {
   }
   
   @inline(__always)
+  public final func setMessagingEnabled(pushEnabled: Bool, inAppEnabled: Bool) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setMessagingEnabled(pushEnabled: pushEnabled, inAppEnabled: inAppEnabled)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func registerPushToken(token: std.string) -> bridge.Result_std__shared_ptr_Promise_void___ {
+    do {
+      let __result = try self.__implementation.registerPushToken(token: String(token))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve() })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func unregisterPushToken() -> bridge.Result_std__shared_ptr_Promise_void___ {
+    do {
+      let __result = try self.__implementation.unregisterPushToken()
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve() })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func handleNotification(data: margelo.nitro.SharedAnyMap, foreground: Bool, opened: Bool) -> bridge.Result_std__shared_ptr_Promise_bool___ {
+    do {
+      let __result = try self.__implementation.handleNotification(data: AnyMap(withCppPart: data), foreground: foreground, opened: opened)
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_bool__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_bool__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_bool__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(__result) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_bool___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_bool___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setNotificationLinkHandler(handler: bridge.std__optional_std__function_void_const_std__string_____url______) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setNotificationLinkHandler(handler: { () -> ((_ url: String) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_const_std__string_____url______(handler) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_const_std__string_____url______(handler)
+          return { () -> (String) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_std__string(__unwrapped)
+            return { (__url: String) -> Void in
+              __wrappedFunction.call(std.string(__url))
+            }
+          }()
+        } else {
+          return nil
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func consumeInitialNotification() -> bridge.Result_std__optional_std__shared_ptr_AnyMap___ {
+    do {
+      let __result = try self.__implementation.consumeInitialNotification()
+      let __resultCpp = { () -> bridge.std__optional_std__shared_ptr_AnyMap__ in
+        if let __unwrappedValue = __result {
+          return bridge.create_std__optional_std__shared_ptr_AnyMap__(__unwrappedValue.cppPart)
+        } else {
+          return .init()
+        }
+      }()
+      return bridge.create_Result_std__optional_std__shared_ptr_AnyMap___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__optional_std__shared_ptr_AnyMap___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
   public final func sendProductEvent(productId: std.string, eventType: Int32, params: bridge.std__optional_std__shared_ptr_AnyMap__) -> bridge.Result_std__shared_ptr_Promise_void___ {
     do {
       let __result = try self.__implementation.sendProductEvent(productId: String(productId), eventType: margelo.nitro.usercom.UserComProductEventType(rawValue: eventType)!, params: { () -> AnyMap? in

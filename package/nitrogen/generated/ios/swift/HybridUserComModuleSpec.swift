@@ -17,6 +17,12 @@ public protocol HybridUserComModuleSpec_protocol: HybridObject {
   func initialize(config: UserComModuleConfig) throws -> Promise<Void>
   func registerUser(userData: UserComModuleUserData) throws -> Promise<UserComModuleRegisterUserResponse>
   func logout() throws -> Promise<Void>
+  func setMessagingEnabled(pushEnabled: Bool, inAppEnabled: Bool) throws -> Void
+  func registerPushToken(token: String) throws -> Promise<Void>
+  func unregisterPushToken() throws -> Promise<Void>
+  func handleNotification(data: AnyMap, foreground: Bool, opened: Bool) throws -> Promise<Bool>
+  func setNotificationLinkHandler(handler: ((_ url: String) -> Void)?) throws -> Void
+  func consumeInitialNotification() throws -> AnyMap?
   func sendProductEvent(productId: String, eventType: UserComProductEventType, params: AnyMap?) throws -> Promise<Void>
   func sendCustomEvent(eventName: String, data: AnyMap) throws -> Promise<Void>
   func sendScreenEvent(screenName: String) throws -> Promise<Void>

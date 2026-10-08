@@ -7,6 +7,7 @@ import com.user.sdk.UserCom
 /** Optional FCM receiver for apps without another FirebaseMessagingService. */
 class UserComMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        if (!UserComMessagePolicy.allows(applicationContext, remoteMessage.data)) return
         // FCM can start this service before the host app initializes User.com.
         runCatching { UserCom.getInstance() }
             .onSuccess { it.onNotification(applicationContext, remoteMessage) }

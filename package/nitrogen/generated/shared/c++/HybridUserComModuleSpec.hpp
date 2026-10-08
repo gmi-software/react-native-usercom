@@ -26,9 +26,10 @@ namespace margelo::nitro::usercom { enum class UserComProductEventType; }
 #include <string>
 #include <variant>
 #include "UserComModuleUserData.hpp"
-#include "UserComProductEventType.hpp"
 #include <NitroModules/AnyMap.hpp>
+#include <functional>
 #include <optional>
+#include "UserComProductEventType.hpp"
 
 namespace margelo::nitro::usercom {
 
@@ -64,6 +65,12 @@ namespace margelo::nitro::usercom {
       virtual std::shared_ptr<Promise<void>> initialize(const UserComModuleConfig& config) = 0;
       virtual std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> registerUser(const UserComModuleUserData& userData) = 0;
       virtual std::shared_ptr<Promise<void>> logout() = 0;
+      virtual void setMessagingEnabled(bool pushEnabled, bool inAppEnabled) = 0;
+      virtual std::shared_ptr<Promise<void>> registerPushToken(const std::string& token) = 0;
+      virtual std::shared_ptr<Promise<void>> unregisterPushToken() = 0;
+      virtual std::shared_ptr<Promise<bool>> handleNotification(const std::shared_ptr<AnyMap>& data, bool foreground, bool opened) = 0;
+      virtual void setNotificationLinkHandler(const std::optional<std::function<void(const std::string& /* url */)>>& handler) = 0;
+      virtual std::optional<std::shared_ptr<AnyMap>> consumeInitialNotification() = 0;
       virtual std::shared_ptr<Promise<void>> sendProductEvent(const std::string& productId, UserComProductEventType eventType, const std::optional<std::shared_ptr<AnyMap>>& params) = 0;
       virtual std::shared_ptr<Promise<void>> sendCustomEvent(const std::string& eventName, const std::shared_ptr<AnyMap>& data) = 0;
       virtual std::shared_ptr<Promise<void>> sendScreenEvent(const std::string& screenName) = 0;

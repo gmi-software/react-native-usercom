@@ -6,6 +6,11 @@ import type {
 import { UserComProductEventType } from './specs/UserComModule.nitro'
 
 export type { UserComModuleUserData }
+export type {
+  UserComModule as UserComModuleType,
+  UserComModuleConfig,
+  UserComModuleRegisterUserResponse,
+} from './specs/UserComModule.nitro'
 
 export { UserComProductEventType }
 

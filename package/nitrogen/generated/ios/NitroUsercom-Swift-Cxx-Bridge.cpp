@@ -38,6 +38,22 @@ namespace margelo::nitro::usercom::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(bool /* result */)>
+  Func_void_bool create_Func_void_bool(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroUsercom::Func_void_bool::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](bool result) mutable -> void {
+      swiftClosure.call(result);
+    };
+  }
+  
+  // pragma MARK: std::function<void(const std::string& /* url */)>
+  Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroUsercom::Func_void_std__string::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const std::string& url) mutable -> void {
+      swiftClosure.call(url);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridUserComModuleSpec>
   std::shared_ptr<HybridUserComModuleSpec> create_std__shared_ptr_HybridUserComModuleSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
     NitroUsercom::HybridUserComModuleSpec_cxx swiftPart = NitroUsercom::HybridUserComModuleSpec_cxx::fromUnsafe(swiftUnsafePointer);
