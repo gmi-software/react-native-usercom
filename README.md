@@ -37,11 +37,11 @@ Built with [Nitro Modules](https://nitro.margelo.com/) for high-performance nati
 This package requires `react-native-nitro-modules` to work. Install it first:
 
 ```bash
-npm install react-native-nitro-modules
+npm install react-native-nitro-modules@^0.37.1
 # or
-yarn add react-native-nitro-modules
+yarn add react-native-nitro-modules@^0.37.1
 # or
-bun add react-native-nitro-modules
+bun add react-native-nitro-modules@^0.37.1
 ```
 
 ### Step 2: Install React Native UserCom
@@ -56,7 +56,7 @@ bun add @gmisoftware/react-native-usercom
 
 ### Prerequisites
 
-- React Native with New Architecture and `react-native-nitro-modules` 0.33.1+
+- React Native with New Architecture and `react-native-nitro-modules` 0.37.x (0.37.1 or later)
 - Expo development build (Expo Go does not include this native module)
 - iOS 15.1+
 - Android API level supported by the host app and native User.com SDK
@@ -611,7 +611,7 @@ const {
 
 ## Requirements
 
-- React Native with New Architecture and `react-native-nitro-modules` 0.33.1+
+- React Native with New Architecture and `react-native-nitro-modules` 0.37.x (0.37.1 or later)
 - Expo development build (Expo Go does not include this native module)
 - iOS 15.1+
 - Android API level supported by the host app and native User.com SDK
