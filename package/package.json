@@ -1,6 +1,6 @@
 {
   "name": "@gmisoftware/react-native-usercom",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Integrates User.com platform features directly in your React Native app",
   "main": "lib/index",
   "module": "lib/index",
@@ -60,17 +60,17 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
-    "nitrogen": "0.31.10",
+    "nitrogen": "0.37.2",
     "prettier": "^3.3.3",
     "react": "19.1.1",
     "react-native": "0.82.0",
-    "react-native-nitro-modules": "0.33.1",
+    "react-native-nitro-modules": "0.37.2",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-nitro-modules": "^0.33.1",
+    "react-native-nitro-modules": "^0.37.1",
     "@expo/config-plugins": "*"
   },
   "eslintConfig": {

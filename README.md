@@ -56,7 +56,7 @@ bun add @gmisoftware/react-native-usercom
 
 ### Prerequisites
 
-- React Native with New Architecture and `react-native-nitro-modules` 0.33.1+
+- React Native with New Architecture and `react-native-nitro-modules` 0.37.1+
 - Expo development build (Expo Go does not include this native module)
 - iOS 15.1+
 - Android API level supported by the host app and native User.com SDK
@@ -611,7 +611,7 @@ const {
 
 ## Requirements
 
-- React Native with New Architecture and `react-native-nitro-modules` 0.33.1+
+- React Native with New Architecture and `react-native-nitro-modules` 0.37.1+
 - Expo development build (Expo Go does not include this native module)
 - iOS 15.1+
 - Android API level supported by the host app and native User.com SDK
